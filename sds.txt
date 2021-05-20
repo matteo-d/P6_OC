@@ -1,0 +1,8 @@
+Lancer backend : nodemon server 
+
+Lancer frontend :
+Setup sass ancienne version Dans le dossier frontend :  npm install -S node-sass@4.14.1 
+npm run start 
+
+
+// installer body parser mogoDB et mongoose 

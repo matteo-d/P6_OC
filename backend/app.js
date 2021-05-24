@@ -2,7 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const app = express();
-const userRoutes = require('./routes/users');
+const userRoutes = require('./routes/users.js');
 // CONNECT TO MONGO DB 
 mongoose
   .connect(
@@ -20,14 +20,19 @@ app.use((req, res, next) => {
     next();
   });
 
-
-
-
-  //
+// ROUTE POST SAUCE
+  app.post('/api/sauces', (req, res, next) => {
+    console.log(req.body);
+    res.status(201).json({
+      message: 'Objet créé !'
+    });
+  });
+// ROUTE AUTH 
+  app.use('/api/auth', userRoutes);
 app.use(bodyParser.json());
 
 
-app.use('/api/auth', userRoutes);
+
 
 
 module.exports = app;

@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-
+const bodyParser = require('body-parser');
 // CORS
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -15,8 +15,18 @@ app.use((req, res, next) => {
   next();
 });
 // MIDDLEWARE
+app.use(bodyParser.json()); // Transforme le corp de la requete en JSON pour toutes les routes 
 
-// METTRE DES SAUCES EN VENTES
+// METTRE EN VENTE DES SAUCE (POST) ------------ !!! Attention ROUTES post avant Routes GET
+app.post('/api/sauces', (req, res, next) => {
+  console.log(req.body);
+  res.status(201).json({ 
+    message: 'Sauce créé !'
+  });
+});
+
+
+// METTRE DES SAUCES EN VENTES ( GET )
 app.use("/api/sauces", (req, res, next) => {
   const sauce = [
     {
@@ -36,5 +46,6 @@ app.use("/api/sauces", (req, res, next) => {
   ];
   res.status(200).json(sauce); // Si la réponse est de statut 200 (Réussite de la requete) mets l'objet sauce en JSON et display le dans l'API
 });
+
 
 module.exports = app;

@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const uniqueValidator = require("mongoose-unique-validator");
+
 /** Sauce Mongoose Schema **/
 
 const userSchema = mongoose.Schema({

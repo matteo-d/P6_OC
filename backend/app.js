@@ -4,7 +4,7 @@ const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const sauceRoutes = require('./routes/sauce');
 const userRoutes = require('./routes/user');
-
+const path = require('path');
 // CONNECT TO MONGO DB
 mongoose
   .connect(
@@ -32,5 +32,8 @@ app.use(bodyParser.json()); // Transforme le corp de la requete en JSON pour tou
 
 // ROUTES SAUCES
 app.use('/api/sauces', sauceRoutes)
+// ROUTES AUTH
 app.use('/api/auth', userRoutes)
+// ROUTES IMAGES 
+app.use('/images', express.static(path.join(__dirname, 'images')));
 module.exports = app;

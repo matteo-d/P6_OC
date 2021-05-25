@@ -1,22 +1,20 @@
-const jwt = require('jsonwebtoken');
+const multer = require('multer');
 
-/** Authentication **/
-
-const TOKEN = process.env.TOKEN;
-
-module.exports = (req, res, next) => {
-  try {
-    const token = req.headers.authorization.split(' ')[1];
-    const decodedToken = jwt.verify(token, TOKEN);
-    const userId = decodedToken.userId;
-    if (req.body.userId && req.body.userId !== userId) {
-      throw 'Invalid user ID';
-    } else {
-      next();
-    }
-  } catch {
-    res.status(401).json({
-      error: new Error('Invalid request!')
-    });
-  }
+const MIME_TYPES = {
+  'image/jpg': 'jpg',
+  'image/jpeg': 'jpg',
+  'image/png': 'png'
 };
+
+const storage = multer.diskStorage({
+  destination: (req, file, callback) => {
+    callback(null, 'images');
+  },
+  filename: (req, file, callback) => {
+    const name = file.originalname.split(' ').join('_');
+    const extension = MIME_TYPES[file.mimetype];
+    callback(null, name + Date.now() + '.' + extension);
+  }
+});
+
+module.exports = multer({ storage: storage }).single('image');

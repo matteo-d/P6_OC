@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/Sauce");
-
+const jwt = require('jsonwebtoken');
 // Routes Récupération de la liste de Sauce en vente( GET )
 
     exports.signup = (req, res, next) => {
@@ -18,8 +18,7 @@ const User = require("../models/Sauce");
           .catch(error => res.status(500).json({ error }));
       };
 
- 
-    exports.login = (req, res, next) => {
+      exports.login = (req, res, next) => {
         User.findOne({ email: req.body.email })
           .then(user => {
             if (!user) {
@@ -32,7 +31,11 @@ const User = require("../models/Sauce");
                 }
                 res.status(200).json({
                   userId: user._id,
-                  token: 'TOKEN'
+                  token: jwt.sign(
+                    { userId: user._id },
+                    'RANDOM_TOKEN_SECRET',
+                    { expiresIn: '24h' }
+                  )
                 });
               })
               .catch(error => res.status(500).json({ error }));

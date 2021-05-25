@@ -3,8 +3,8 @@ const app = express();
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const sauceRoutes = require('./routes/sauce');
-const sauceModel = require("./models/Sauce"); // Import le models de sauce
-const sauce = require("./models/Sauce");
+const userRoutes = require('./routes/user');
+
 // CONNECT TO MONGO DB
 mongoose
   .connect(
@@ -32,4 +32,5 @@ app.use(bodyParser.json()); // Transforme le corp de la requete en JSON pour tou
 
 // ROUTES SAUCES
 app.use('/api/sauces', sauceRoutes)
+app.use('/api/auth', userRoutes)
 module.exports = app;

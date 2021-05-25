@@ -1,6 +1,18 @@
 const express = require("express");
 const app = express();
 const bodyParser = require('body-parser');
+const mongoose = require ('mongoose')
+// CONNECT TO MONGO DB
+mongoose
+  .connect(
+    "mongodb+srv://sopeckocko:MRkkLPHmXfmwSSIh@cluster0.ntwtw.mongodb.net/P6_OC?retryWrites=true&w=majority",
+    { useNewUrlParser: true, useUnifiedTopology: true }
+  )
+  .then(() => console.log("Connexion à MongoDB réussie !"))
+  .catch(() => console.log("Connexion à MongoDB échouée !"));
+
+
+
 // CORS
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");

@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const User = require("../models/Sauce");
+const User = require("../models/User.js");
 const jwt = require('jsonwebtoken');
 // Routes Récupération de la liste de Sauce en vente( GET )
 
@@ -42,3 +42,5 @@ const jwt = require('jsonwebtoken');
           })
           .catch(error => res.status(500).json({ error }));
       };
+
+      module.exports = router;

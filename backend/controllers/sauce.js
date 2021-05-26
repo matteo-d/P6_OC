@@ -1,6 +1,6 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const Sauce = require("../models/Sauce");
+const Sauce = require("../models/Sauce.js");
 const fs = require('fs');
   //  Routes Enregistrement des Sauces dans la base de données (POST) ------------ !!! Attention ROUTES post avant Routes GET
 

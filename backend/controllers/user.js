@@ -1,7 +1,8 @@
-const express = require("express");
-const router = express.Router();
-const User = require("../models/User.js");
-const jwt = require('jsonwebtoken');
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const User = require("../models/User");
+
+const TOKEN = process.env.TOKEN;
 // Routes Récupération de la liste de Sauce en vente( GET )
 
     exports.signup = (req, res, next) => {
@@ -33,7 +34,7 @@ const jwt = require('jsonwebtoken');
                   userId: user._id,
                   token: jwt.sign(
                     { userId: user._id },
-                    'RANDOM_TOKEN_SECRET',
+                    TOKEN,
                     { expiresIn: '24h' }
                   )
                 });
@@ -43,4 +44,4 @@ const jwt = require('jsonwebtoken');
           .catch(error => res.status(500).json({ error }));
       };
 
-      module.exports = router;
+   

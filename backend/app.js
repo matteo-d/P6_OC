@@ -7,7 +7,7 @@ const path = require('path');
 
 // const sauceRoutes = require('./routes/sauce.js');
 const userRoutes = require('./routes/user.js');
-
+// const sauceRoutes = require('./routes/sauce.js');
 const app = express();
 // CONNECT TO MONGO DB
 mongoose
@@ -34,11 +34,36 @@ app.use((req, res, next) => {
 // BODY PARSER 
 app.use(bodyParser.json()); // Transforme le corp de la requete en JSON pour toutes les routes
 
+app.use('/api/sauces', (req, res, next) => {
+  const stuff = [
+    {
+     
+  name:'bloup' ,
+  manufacturer: 'plop',
+  description:'lolilol',
+  mainPepper: 'pepper',
+  imageUrl: 'https://cdn.pixabay.com/photo/2019/06/11/18/56/camera-4267692_1280.jpg',
+  heat: 5,
+  userId: 'RANDOM',
+    },
+    {
+      name:'bloup' ,
+      manufacturer: 'plop',
+      description:'lolilol',
+      mainPepper: 'pepper',
+      imageUrl: 'https://cdn.pixabay.com/photo/2019/06/11/18/56/camera-4267692_1280.jpg',
+      heat: 5,
+      userId: 'RANDOM',
+ 
+    },
+  ];
+  res.status(200).json(stuff);
+});
 
 // ROUTES IMAGES 
 app.use('/images', express.static(path.join(__dirname, 'images')));
 // ROUTES SAUCES
-//app.use('/api/sauces', sauceRoutes)
+// app.use('/api/sauces', sauceRoutes)
 // ROUTES AUTH
 app.use('/api/auth', userRoutes)
 

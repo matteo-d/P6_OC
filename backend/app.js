@@ -5,8 +5,8 @@ const mongoose = require("mongoose");
 
 const path = require('path');
 
-const sauceRoutes = require('./routes/sauce');
-const userRoutes = require('./routes/user');
+// const sauceRoutes = require('./routes/sauce.js');
+const userRoutes = require('./routes/user.js');
 
 const app = express();
 // CONNECT TO MONGO DB
@@ -33,10 +33,12 @@ app.use((req, res, next) => {
 });
 // BODY PARSER 
 app.use(bodyParser.json()); // Transforme le corp de la requete en JSON pour toutes les routes
+
+
 // ROUTES IMAGES 
 app.use('/images', express.static(path.join(__dirname, 'images')));
 // ROUTES SAUCES
-app.use('/api/sauces', sauceRoutes)
+//app.use('/api/sauces', sauceRoutes)
 // ROUTES AUTH
 app.use('/api/auth', userRoutes)
 

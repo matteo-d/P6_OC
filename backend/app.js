@@ -1,13 +1,12 @@
 const express = require("express");
-
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
+mongoose.set("useCreateIndex", true);
+const path = require("path");
+const cors = require("cors");
+const sauceRoutes = require("./routes/sauce.js");
+const userRoutes = require("./routes/user.js");
 
-const path = require('path');
-
-// const sauceRoutes = require('./routes/sauce.js');
-const userRoutes = require('./routes/user.js');
-// const sauceRoutes = require('./routes/sauce.js');
 const app = express();
 // CONNECT TO MONGO DB
 mongoose
@@ -31,40 +30,40 @@ app.use((req, res, next) => {
   );
   next();
 });
-// BODY PARSER 
-app.use(bodyParser.json()); // Transforme le corp de la requete en JSON pour toutes les routes
 
 app.use('/api/sauces', (req, res, next) => {
-  const stuff = [
+  const sauces = [
     {
-     
-  name:'bloup' ,
-  manufacturer: 'plop',
-  description:'lolilol',
-  mainPepper: 'pepper',
-  imageUrl: 'https://cdn.pixabay.com/photo/2019/06/11/18/56/camera-4267692_1280.jpg',
-  heat: 5,
-  userId: 'RANDOM',
+      userId: 'Mon premier objet',
+      name: 'Mon premier objet',
+      manufacturer: 'Mon premier objet',
+      description: 'Mon premier objet',
+      mainPepper: 'Mon premier objet',
+      imageUrl: 'https://cdn.pixabay.com/photo/2019/06/11/18/56/camera-4267692_1280.jpg',
+      heat:'Mon premier objet',
+
     },
     {
-      name:'bloup' ,
-      manufacturer: 'plop',
-      description:'lolilol',
-      mainPepper: 'pepper',
+      userId: 'Mon premier objet',
+      name: 'Mon premier objet',
+      manufacturer: 'Mon premier objet',
+      description: 'Mon premier objet',
+      mainPepper: 'Mon premier objet',
       imageUrl: 'https://cdn.pixabay.com/photo/2019/06/11/18/56/camera-4267692_1280.jpg',
-      heat: 5,
-      userId: 'RANDOM',
- 
+      heat:'Mon premier objet',
+
     },
   ];
-  res.status(200).json(stuff);
+  res.status(200).json(sauces);
 });
-
-// ROUTES IMAGES 
-app.use('/images', express.static(path.join(__dirname, 'images')));
+// BODY PARSER
+app.use(bodyParser.json()); // Transforme le corp de la requete en JSON pour toutes les routes
+app.use(cors());
+// ROUTES IMAGES
+app.use("/images", express.static(path.join(__dirname, "images")));
 // ROUTES SAUCES
-// app.use('/api/sauces', sauceRoutes)
+app.use("/api/sauces", sauceRoutes);
 // ROUTES AUTH
-app.use('/api/auth', userRoutes)
+app.use("/api/auth", userRoutes);
 
 module.exports = app;

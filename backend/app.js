@@ -1,7 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
-mongoose.set("useCreateIndex", true);
+mongoose.set("useCreateIndex", true); // Handle node deprecation 
 const path = require("path");
 const cors = require("cors");
 const sauceRoutes = require("./routes/sauce.js");

@@ -1,6 +1,6 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const mongoose = require("mongoose");
+const mongoose = require("mongoose"); // Mongoose est un package qui facilite les interactions avec notre base de données
 mongoose.set("useCreateIndex", true); // Handle node deprecation 
 const path = require("path");
 const cors = require("cors");
@@ -35,7 +35,9 @@ app.use((req, res, next) => {
 app.use(bodyParser.json()); // Transforme le corp de la requete en JSON pour toutes les routes
 app.use(cors());
 // ROUTES IMAGES
-app.use("/images", express.static(path.join(__dirname, "images")));
+// express.static = dit a express de nosu servir le dossier static images
+// gràce a path, on accède peut acceder aux chemins de notre systeme de fichier
+app.use("/images", express.static(path.join(__dirname, "images"))); 
 // ROUTES SAUCES
 app.use("/api/sauces", sauceRoutes);
 // ROUTES AUTH

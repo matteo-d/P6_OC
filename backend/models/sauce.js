@@ -1,8 +1,7 @@
 const mongoose = require('mongoose');
 
-/** Sauce Mongoose Schema **/
 
-const sauceSchema = mongoose.Schema({
+const sauceSchema = mongoose.Schema({ // Mongoose.schema permet de définir les différents champs d'on a besoin MongoDB
   userId: { type: String, required: true },
   name: { type: String, required: true, },
   manufacturer: { type: String, required: true },

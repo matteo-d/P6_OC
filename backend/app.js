@@ -1,7 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose"); // Mongoose est un package qui facilite les interactions avec notre base de données
-mongoose.set("useCreateIndex", true); // Handle node deprecation 
+require('dotenv').config()
 const path = require("path");
 const cors = require("cors");
 const sauceRoutes = require("./routes/sauce.js");
@@ -9,9 +9,12 @@ const userRoutes = require("./routes/user.js");
 
 const app = express();
 // CONNECT TO MONGO DB
+const ID = process.env.ID;
+const MDP = process.env.MDP;
+const ADDRESS = process.env.ADDRESS
 mongoose
   .connect(
-    "mongodb+srv://sopeckocko:MRkkLPHmXfmwSSIh@cluster0.ntwtw.mongodb.net/P6_OC?retryWrites=true&w=majority",
+    `mongodb+srv://${ID}:${MDP}@${ADDRESS}`,
     { useNewUrlParser: true, useUnifiedTopology: true }
   )
   .then(() => console.log("Connexion à MongoDB réussie !"))

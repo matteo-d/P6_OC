@@ -1,6 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose"); // Mongoose est un package qui facilite les interactions avec notre base de données
+mongoose.set("useCreateIndex", true); // Pour éviter warning node 
 require('dotenv').config()
 const path = require("path");
 const cors = require("cors");
@@ -20,7 +21,7 @@ mongoose
   .then(() => console.log("Connexion à MongoDB réussie !"))
   .catch(() => console.log("Connexion à MongoDB échouée !"));
 
-// CORS
+// CORS =  Blocks HTTP calls between different servers
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(

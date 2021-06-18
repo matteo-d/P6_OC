@@ -1,12 +1,12 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-
-const sauceSchema = mongoose.Schema({ // Mongoose.schema permet de définir les différents champs d'on a besoin MongoDB
+const sauceSchema = mongoose.Schema({
+  // Mongoose.schema permet de définir les différents champs d'on a besoin MongoDB
   userId: { type: String, required: true },
-  name: { type: String, required: true, },
+  name: { type: String, required: true },
   manufacturer: { type: String, required: true },
   description: { type: String, required: true },
-  mainPepper: { type: String, required: true},
+  mainPepper: { type: String, required: true },
   imageUrl: { type: String, required: true },
   heat: { type: Number, required: true },
   likes: { type: Number, required: false, default: 0 },
@@ -15,4 +15,4 @@ const sauceSchema = mongoose.Schema({ // Mongoose.schema permet de définir les 
   usersDisliked: { type: [String], required: false },
 });
 
-module.exports = mongoose.model('Sauce', sauceSchema); // export du modele comme un modele mongoose
+module.exports = mongoose.model("Sauce", sauceSchema); // export du modele comme un modele mongoose

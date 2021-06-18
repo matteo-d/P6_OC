@@ -1,7 +1,8 @@
 const bcrypt = require("bcrypt"); // hash le mdp, pour vérifier si mdp est bon compare le hash du mdp entré avec le hash enregistré dans la DB.
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
-
+require('dotenv').config()
+const TOKEN = process.env.TOKEN 
 // Routes Récupération de la liste de Sauce en vente( GET )
 
 exports.signup = (req, res, next) => { // La fonction de hashage de bcrypt est asynchrone
@@ -35,7 +36,7 @@ exports.login = (req, res, next) => { // Permet aux users existant de se connect
             userId: user._id,
             token: jwt.sign( // Fonction sign prends en param l'user Id , la clef de cryptage secrete
               { userId: user._id }, // Payload, càd les données que l'on veut encoder
-              'RANDOM_TOKEN_SECRET', // Clef secrete (ou pas)
+              `${TOKEN}`, // Clef secrete (ou pas)
               { expiresIn: '24h' } // Quand la clef secrete va exprirer
             )
           });

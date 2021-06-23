@@ -22,11 +22,12 @@ exports.signup = (req, res, next) => {// La fonction de hashage de bcrypt est as
         .save() // On save le nouvel user dans la DB 
         .then(() => res.status(201).json({ message: "Utilisateur créé !" })) // Réponse vers le frontend sinon dis que la requete n'est pas aboutie
         .catch((error) => res.status(400).json({ error  })); // Error 400 = Bad request
-    })
-    
+    }) 
     .catch((error) => res.status(500).json({ error })); // Error 500 = Error server 
+}
+else {
+   res.status(401).json({ message: "OUPS ! Votre mot de passe doit contenir au moins: 1 Majuscule, 1 Minuscule, 1 Chiffre et 6 caractères "  }); // Error 500 = Error server 
 };
-
 }
 
 exports.login = (req, res, next) => { // Permet aux users existant de se connecter 

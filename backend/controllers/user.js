@@ -5,7 +5,12 @@ require('dotenv').config()
 const TOKEN = process.env.TOKEN
 // Routes Récupération de la liste de Sauce en vente( GET )
 
-exports.signup = (req, res, next) => { // La fonction de hashage de bcrypt est asynchrone
+isValidPassword = (password) => {
+  return /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{6,}$/.test(password);
+};
+
+exports.signup = (req, res, next) => {// La fonction de hashage de bcrypt est asynchrone
+ if (isValidPassword(req.body.password)) {
   bcrypt
     .hash(req.body.password, 10) // Ici on hash 10x le mdp 
     .then((hash) => { // On récupère le hash du mdp 
@@ -18,8 +23,11 @@ exports.signup = (req, res, next) => { // La fonction de hashage de bcrypt est a
         .then(() => res.status(201).json({ message: "Utilisateur créé !" })) // Réponse vers le frontend sinon dis que la requete n'est pas aboutie
         .catch((error) => res.status(400).json({ error  })); // Error 400 = Bad request
     })
+    
     .catch((error) => res.status(500).json({ error })); // Error 500 = Error server 
 };
+
+}
 
 exports.login = (req, res, next) => { // Permet aux users existant de se connecter 
   User.findOne({ email: req.body.email }) // Cherche un seul utilisateur dont l'adresse mail correspond

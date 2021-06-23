@@ -25,12 +25,12 @@ exports.login = (req, res, next) => { // Permet aux users existant de se connect
   User.findOne({ email: req.body.email }) // Cherche un seul utilisateur dont l'adresse mail correspond
     .then(user => {
       if (!user) {
-        return res.status(401).json({ error: 'Utilisateur non trouvé !' }); // Si pas de match error 401 = Unauthorized
+        return res.status(401).json({ error: 'OUPS ! Mauvais identifiants de connexion, Veuillez Réessayer' }); // Si pas de match error 401 = Unauthorized
       }
       bcrypt.compare(req.body.password, user.password) // Fonction compare de bcrypt pour voir si mdp et hash matchs, renvoie boolean
         .then(valid => {
           if (!valid) {
-            return res.status(401).json({ error: 'Mot de passe incorrect !' }); // Si pas de match error 401 = Unauthorized
+            return res.status(401).json({ error: 'OUPS ! Mauvais identifiants de connexion, Veuillez Réessayer' }); // Si pas de match error 401 = Unauthorized
           }
           res.status(200).json({ 
             userId: user._id,

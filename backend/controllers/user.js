@@ -2,7 +2,7 @@ const bcrypt = require("bcrypt"); // hash le mdp, pour vérifier si mdp est bon 
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 require('dotenv').config()
-const TOKEN = process.env.TOKEN 
+const TOKEN = process.env.TOKEN
 // Routes Récupération de la liste de Sauce en vente( GET )
 
 exports.signup = (req, res, next) => { // La fonction de hashage de bcrypt est asynchrone
@@ -16,7 +16,7 @@ exports.signup = (req, res, next) => { // La fonction de hashage de bcrypt est a
       user
         .save() // On save le nouvel user dans la DB 
         .then(() => res.status(201).json({ message: "Utilisateur créé !" })) // Réponse vers le frontend sinon dis que la requete n'est pas aboutie
-        .catch((error) => res.status(400).json({ error })); // Error 400 = Bad request
+        .catch((error) => res.status(400).json({ error  })); // Error 400 = Bad request
     })
     .catch((error) => res.status(500).json({ error })); // Error 500 = Error server 
 };

@@ -1,0 +1,4 @@
+ID = ID de la Database
+MDP = MDP de la Database
+ADDRESS = Address de la database 
+TOKEN = TOKEN secret de hachage 

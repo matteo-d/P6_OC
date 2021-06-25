@@ -2,7 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose"); // Mongoose est un package qui facilite les interactions avec notre base de données
 mongoose.set("useCreateIndex", true); // Pour éviter warning node 
-const rateLimit = require("express-rate-limit"); // Limiter le nombre de requetes login / éviter brute force 
+
 require('dotenv').config()
 const path = require("path");
 const cors = require("cors");
@@ -36,10 +36,7 @@ app.use((req, res, next) => {
   next();
 });
 
-const apiLimiter = rateLimit({
-  windowMs: 3 * 60 * 1000, // 15 minutes
-  max: 5
-});
+
 // BODY PARSER
 app.use(bodyParser.json()); // Transforme le corp de la requete en JSON pour toutes les routes
 app.use(cors());
@@ -50,6 +47,6 @@ app.use("/images", express.static(path.join(__dirname, "images")));
 // ROUTES SAUCES
 app.use("/api/sauces", sauceRoutes);
 // ROUTES AUTH
-app.use("/api/auth",apiLimiter, userRoutes);
+app.use("/api/auth", userRoutes);
 
 module.exports = app;

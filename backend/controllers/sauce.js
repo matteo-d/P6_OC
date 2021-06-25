@@ -3,9 +3,12 @@ const fs = require("fs"); // Pour pouvoir utiliser le filesystem (utile pour fon
 //   Enregistrement des Sauces dans la base de données (POST) ------------ !!! Attention ROUTES post avant Routes GET
 
 exports.createSauce = (req, res, next) => {
+
   const sauceObject = JSON.parse(req.body.sauce); // On extrait le JSON de la sauce
-  console.log(req.body.sauce);
-  delete sauceObject._id;
+
+switch (sauceObject.heat <= 10 && req.file.filename.includes("undefined") === false ) {
+  case true:
+    delete sauceObject._id;
   const sauce = new Sauce({
     ...sauceObject, // Opérateur spread pour dire que l'on copie les champs avec le schema de mongoose
      //Composition de l'URL :
@@ -19,8 +22,16 @@ exports.createSauce = (req, res, next) => {
     .save() // Enregistre la sauce dans la DB et renvoie une promesse
     .then(() => res.status(201).json({ message: "Objet enregistré !" })) // Une fois la réponse retournée faire un retour au frontend sinon dit que la requete n'est pas aboutie
     .catch((error) => res.status(400).json({ error }));
-};
+    break;
+  case false:
+    res.status(400).json({ message: " Oups ! Une erreur est survenue, vérifiez le contenu de la requête" });
 
+  default:
+    res.status(400).json({ message: "Objet NON enregistré !" });
+}
+}
+
+ 
 //  Récupération d'une sauce spécifique
 exports.getOneSauce = (req, res, next) => {
   // LE ":id" indique a express que la route est dynamique

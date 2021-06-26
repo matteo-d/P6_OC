@@ -1,35 +1,60 @@
 const Sauce = require("../models/Sauce");
 const fs = require("fs"); // Pour pouvoir utiliser le filesystem (utile pour fonction deleteSauce)
+const User = require("../models/User");
 //   Enregistrement des Sauces dans la base de données (POST) ------------ !!! Attention ROUTES post avant Routes GET
+
+ 
+
 
 exports.createSauce = (req, res, next) => {
 
+
   const sauceObject = JSON.parse(req.body.sauce); // On extrait le JSON de la sauce
 
-switch (sauceObject.heat <= 10 && req.file.filename.includes("undefined") === false ) {
-  case true:
-    delete sauceObject._id;
-  const sauce = new Sauce({
-    ...sauceObject, // Opérateur spread pour dire que l'on copie les champs avec le schema de mongoose
-     //Composition de l'URL :
-    imageUrl: `${req.protocol}://${req.get("host")}/images/${
-     
-      req.file.filename //  req.protocol = http ou https, req.get("host") = localhost3000 ou racine server, /images/, req.file.filename
-    }`,
+  console.log(sauceObject.userId)
+  let userId = sauceObject.userId
+  console.log(userId)
+
+  User.find({ _id:userId}, (error,data) => {
+    if (error) {
+      console.log(error)
+      console.log('error')
+      res.status(400).json({ message: " Oups ! Une erreur est survenue, vérifiez le contenu de la requête" });
+    }
+    else  {
+      console.log(data)
+      switch (sauceObject.heat <= 10 && req.file.filename.includes("undefined") === false  ){
+        case true:
+          delete sauceObject._id;
+        const sauce = new Sauce({
+          ...sauceObject, // Opérateur spread pour dire que l'on copie les champs avec le schema de mongoose
+           //Composition de l'URL :
+          imageUrl: `${req.protocol}://${req.get("host")}/images/${
+           
+            req.file.filename //  req.protocol = http ou https, req.get("host") = localhost3000 ou racine server, /images/, req.file.filename
+          }`,
+        });
+      
+        sauce
+          .save() // Enregistre la sauce dans la DB et renvoie une promesse
+          .then(() => res.status(201).json({ message: "Objet enregistré !" })) // Une fois la réponse retournée faire un retour au frontend sinon dit que la requete n'est pas aboutie
+          .catch((error) => res.status(400).json({ error }));
+          break;
+        case false:
+          res.status(400).json({ message: " Oups ! Une erreur est survenue, vérifiez le contenu de la requête" });
+      
+        default:
+          res.status(500).json({ message: "Erreur serveur" });
+      }
+    }
   });
 
-  sauce
-    .save() // Enregistre la sauce dans la DB et renvoie une promesse
-    .then(() => res.status(201).json({ message: "Objet enregistré !" })) // Une fois la réponse retournée faire un retour au frontend sinon dit que la requete n'est pas aboutie
-    .catch((error) => res.status(400).json({ error }));
-    break;
-  case false:
-    res.status(400).json({ message: " Oups ! Une erreur est survenue, vérifiez le contenu de la requête" });
+  
+  }
 
-  default:
-    res.status(400).json({ message: "Objet NON enregistré !" });
-}
-}
+   
+  
+
 
  
 //  Récupération d'une sauce spécifique
@@ -48,9 +73,13 @@ exports.getAllSauces = (req, res, next) => {
 };
 
 //  Mettez à jour une sauce existante
-exports.modifySauce = (req, res, next) => { // 2 situation a prendre en compte : Si l'utilisateur change seulement les informations ou si'l ajoute aussi une image a sa modif
+exports.modifySauce = (req, res, next) => {
+
+ // console.log( req.body.userId) 
+ // console.log(req.body.heat) // 2 situation a prendre en compte : Si l'utilisateur change seulement les informations ou si'l ajoute aussi une image a sa modif
   const sauceObject = req.file // Ici vérifie si on est dans le cas d'une nouvelle image
-    ? { // Si Oui 
+    ? { // Si Oui
+      
         ...JSON.parse(req.body.sauce), // On recupère les infos sur l'objet
         imageUrl: `${req.protocol}://${req.get("host")}/images/${ // On génère l'image URL
           req.file.filename

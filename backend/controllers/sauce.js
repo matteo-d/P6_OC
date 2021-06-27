@@ -75,9 +75,17 @@ exports.getAllSauces = (req, res, next) => {
 //  Mettez à jour une sauce existante
 exports.modifySauce = (req, res, next) => {
 
- // console.log( req.body.userId) 
- // console.log(req.body.heat) // 2 situation a prendre en compte : Si l'utilisateur change seulement les informations ou si'l ajoute aussi une image a sa modif
-  const sauceObject = req.file // Ici vérifie si on est dans le cas d'une nouvelle image
+  console.log(req.body.userId)
+
+  Sauce.find({ _id: req.params.id}, (error,data) => {
+    if (error) {
+      console.log(error)
+      console.log('error')
+      res.status(400).json({ message: " Oups ! Une erreur est survenue, vérifiez le contenu de la requête" });
+    }
+    else  {
+    if(data[0].userId == req.body.userId )  {
+      const sauceObject = req.file // Ici vérifie si on est dans le cas d'une nouvelle image
     ? { // Si Oui
       
         ...JSON.parse(req.body.sauce), // On recupère les infos sur l'objet
@@ -92,7 +100,16 @@ exports.modifySauce = (req, res, next) => {
   )
     .then(() => res.status(200).json({ message: "Objet modifié !" }))
     .catch((error) => res.status(400).json({ error }));
-};
+}
+else {
+  res.status(400).json({ message : " Mauvais UserID " });
+}
+}
+
+})
+  
+  };
+    
 
 //  Suppression d'une sauce
 exports.deleteSauce = (req, res, next) => {

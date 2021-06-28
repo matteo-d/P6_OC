@@ -72,41 +72,47 @@ exports.modifySauce = (req, res, next) => {
     if (error) { 
       console.log(error)
       console.log('error ID sauce')
-      res.status(400).json({ message: " Oups ! Cette sauce n'existe pas " });
+      res.status(500).json({ message: " Oups ! Cette sauce n'existe pas " });
     } // Si la sauce existe bien
     else  {  
-      let newData = JSON.parse(req.body.sauce)
-
-        if ( req.file && data[0].userId == newData.userId  &&  newData.heat <= 10 && req.file.filename.includes("undefined") === false)  {
-          const sauceObject =
-            { 
-        ...JSON.parse(req.body.sauce), 
-        imageUrl: `${req.protocol}://${req.get("host")}/images/${ 
-          req.file.filename
-        }`
-            }
-        Sauce.updateOne(
-        { _id: req.params.id },
-         { ...sauceObject, _id: req.params.id }
-            )
-        .then(() => res.status(200).json({ message: "Objet modifié !" }))
-        .catch((error) => res.status(400).json({ error }));
+      if (req.file) { // Si l'image est modifié 
+        let sauceData = JSON.parse(req.body.sauce)
+      // Si l'id du produit = userId, heat de la sauce -10 et l'image est du bon format
+        if ( data[0].userId == sauceData.userId  &&  sauceData.heat <= 10 && req.file.filename.includes("undefined") === false)  {
+            const sauceObject =
+              { 
+          ...JSON.parse(req.body.sauce), 
+          imageUrl: `${req.protocol}://${req.get("host")}/images/${ 
+            req.file.filename
+          }`
+              }
+          Sauce.updateOne(
+          { _id: req.params.id },
+           { ...sauceObject, _id: req.params.id }
+              )
+          .then(() => res.status(200).json({ message: "Objet modifié !" }))
+          .catch((error) => res.status(400).json({ error }));
+        }
+        else {
+          res.status(500).json({ message: "Erreur serveur" });
+        }
       }
-
-
-        if (data[0].userId == req.body.userId  && req.body.heat <= 10 ) {
+      else { // Si la sauce est modifié sans mofication d'image
+        if (data[0].userId == req.body.userId  && req.body.heat <= 10 ) {   // Si l'id du produit = userId, heat de la sauce -10 
           const sauceObject = { ...req.body }
                Sauce.updateOne(
-    { _id: req.params.id },
-    { ...sauceObject, _id: req.params.id }
-  )
+              { _id: req.params.id },
+            { ...sauceObject, _id: req.params.id })       
     .then(() => res.status(200).json({ message: "Objet modifié !" }))
     .catch((error) => res.status(400).json({ error }));
           }
-  
-}
-    });
-}
+          else {
+            res.status(500).json({ message: "Erreur serveur" });
+          }
+        }
+      }
+    })
+  }
 
 //  Suppression d'une sauce
 exports.deleteSauce = (req, res, next) => {

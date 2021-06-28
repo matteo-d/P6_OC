@@ -34,29 +34,22 @@ exports.createSauce = (req, res, next) => {
             req.file.filename //  req.protocol = http ou https, req.get("host") = localhost3000 ou racine server, /images/, req.file.filename
           }`,
         });
-      
         sauce
           .save() // Enregistre la sauce dans la DB et renvoie une promesse
           .then(() => res.status(201).json({ message: "Objet enregistré !" })) // Une fois la réponse retournée faire un retour au frontend sinon dit que la requete n'est pas aboutie
           .catch((error) => res.status(400).json({ error }));
           break;
-        case false:
+        
+          case false:
           res.status(400).json({ message: " Oups ! Une erreur est survenue, vérifiez le contenu de la requête" });
       
-        default:
+          default:
           res.status(500).json({ message: "Erreur serveur" });
       }
     }
   });
-
-  
   }
 
-   
-  
-
-
- 
 //  Récupération d'une sauce spécifique
 exports.getOneSauce = (req, res, next) => {
   // LE ":id" indique a express que la route est dynamique
@@ -75,41 +68,45 @@ exports.getAllSauces = (req, res, next) => {
 //  Mettez à jour une sauce existante
 exports.modifySauce = (req, res, next) => {
 
-  console.log(req.body.userId)
-
   Sauce.find({ _id: req.params.id}, (error,data) => {
-    if (error) {
+    if (error) { 
       console.log(error)
-      console.log('error')
-      res.status(400).json({ message: " Oups ! Une erreur est survenue, vérifiez le contenu de la requête" });
-    }
-    else  {
-    if(data[0].userId == req.body.userId )  {
-      const sauceObject = req.file // Ici vérifie si on est dans le cas d'une nouvelle image
-    ? { // Si Oui
-      
-        ...JSON.parse(req.body.sauce), // On recupère les infos sur l'objet
-        imageUrl: `${req.protocol}://${req.get("host")}/images/${ // On génère l'image URL
+      console.log('error ID sauce')
+      res.status(400).json({ message: " Oups ! Cette sauce n'existe pas " });
+    } // Si la sauce existe bien
+    else  {  
+      let newData = JSON.parse(req.body.sauce)
+
+        if ( req.file && data[0].userId == newData.userId  &&  newData.heat <= 10 && req.file.filename.includes("undefined") === false)  {
+          const sauceObject =
+            { 
+        ...JSON.parse(req.body.sauce), 
+        imageUrl: `${req.protocol}://${req.get("host")}/images/${ 
           req.file.filename
-        }`,
+        }`
+            }
+        Sauce.updateOne(
+        { _id: req.params.id },
+         { ...sauceObject, _id: req.params.id }
+            )
+        .then(() => res.status(200).json({ message: "Objet modifié !" }))
+        .catch((error) => res.status(400).json({ error }));
       }
-    : { ...req.body }; // Si non prends seulement le corep de la requete normale
-  Sauce.updateOne(
+
+
+        if (data[0].userId == req.body.userId  && req.body.heat <= 10 ) {
+          const sauceObject = { ...req.body }
+               Sauce.updateOne(
     { _id: req.params.id },
     { ...sauceObject, _id: req.params.id }
   )
     .then(() => res.status(200).json({ message: "Objet modifié !" }))
     .catch((error) => res.status(400).json({ error }));
-}
-else {
-  res.status(400).json({ message : " Mauvais UserID " });
-}
-}
-
-})
+          }
   
-  };
-    
+}
+    });
+}
 
 //  Suppression d'une sauce
 exports.deleteSauce = (req, res, next) => {

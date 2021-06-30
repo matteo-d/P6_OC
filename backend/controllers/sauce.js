@@ -1,20 +1,22 @@
 const Sauce = require('../models/Sauce')
-const fs = require('fs') // Pour pouvoir utiliser le filesystem (utile pour fonction deleteSauce)
 const User = require('../models/User')
+const fs = require('fs') // Pour pouvoir utiliser le filesystem (utile pour fonction deleteSauce)
+
 //   Enregistrement des Sauces dans la base de données (POST) ------------ !!! Attention ROUTES post avant Routes GET
 
 exports.createSauce = (req, res, next) => {
-  const sauceObject = JSON.parse(req.body.sauce) // On extrait le JSON de la sauce
+  let sauceObject = JSON.parse(req.body.sauce) // On extrait le JSON de la sauce
   let userId = sauceObject.userId
-  User.find({ _id: userId }, (error, data) => {
+  console.log(userId)
+  User.exists({ _id: userId }, (error) => {
     if (error) {
-      console.log(error)
-      console.log('error')
-      res.status(400).json({
-        message: " Oups ! Mauvais nom d'utilisateur"
+
+      res.status(400).json({ error: error,
+        message:
+          ' Oups ! ID utilisateur invalide'
       })
+
     } else {
-      console.log(data)
       switch (
         sauceObject.heat <= 10 &&
         req.file.filename.includes('undefined') === false
@@ -66,8 +68,6 @@ exports.getAllSauces = (req, res, next) => {
 exports.modifySauce = (req, res, next) => {
   Sauce.find({ _id: req.params.id }, (error, data) => {
     if (error) {
-      console.log(error)
-      console.log('error ID sauce')
       res.status(500).json({ message: " Oups ! Cette sauce n'existe pas " })
     } // Si la sauce existe bien
     else {
@@ -132,7 +132,6 @@ exports.deleteSauce = (req, res, next) => {
 
 // Gestion like / dislike
 exports.likeSauce = (req, res, next) => {
-
   switch (req.body.like) {
     case 0: // Cas ou on annule son like / dislike
       Sauce.findOne({ _id: req.params.id })

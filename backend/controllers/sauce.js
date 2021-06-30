@@ -5,45 +5,54 @@ const fs = require('fs') // Pour pouvoir utiliser le filesystem (utile pour fonc
 //   Enregistrement des Sauces dans la base de données (POST) ------------ !!! Attention ROUTES post avant Routes GET
 
 exports.createSauce = (req, res, next) => {
-  let sauceObject = JSON.parse(req.body.sauce) // On extrait le JSON de la sauce
+  let sauceObject = JSON.parse(req.body.sauce)
   let userId = sauceObject.userId
-  console.log(userId)
-  User.exists({ _id: userId }, (error) => {
+
+  User.exists({ _id: userId }, (error, data) => {
     if (error) {
-
-      res.status(400).json({ error: error,
-        message:
-          ' Oups ! ID utilisateur invalide'
-      })
-
+      res
+        .status(500)
+        .json({
+          error: error,
+          message:
+            ' Oups ! Le serveur rencontre des problèmes, Veuillez réessayer ultérieurement'
+        })
     } else {
-      switch (
-        sauceObject.heat <= 10 &&
-        req.file.filename.includes('undefined') === false
-      ) {
-        case true:
-          delete sauceObject._id
-          const sauce = new Sauce({
-            ...sauceObject, // Opérateur spread pour dire que l'on copie les champs avec le schema de mongoose
-            //Composition de l'URL :
-            imageUrl: `${req.protocol}://${req.get('host')}/images/${
-              req.file.filename //  req.protocol = http ou https, req.get("host") = localhost3000 ou racine server, /images/, req.file.filename
-            }`
-          })
-          sauce
-            .save() // Enregistre la sauce dans la DB et renvoie une promesse
-            .then(() => res.status(201).json({ message: 'Objet enregistré !' })) // Une fois la réponse retournée faire un retour au frontend sinon dit que la requete n'est pas aboutie
-            .catch(error => res.status(400).json({ error }))
-          break
+      if (data == true) {
+        switch (
+          sauceObject.heat <= 10 &&
+          req.file.filename.includes('undefined') === false
+        ) {
+          case true:
+            delete sauceObject._id
+            const sauce = new Sauce({
+              ...sauceObject, // Opérateur spread pour dire que l'on copie les champs avec le schema de mongoose
+              //Composition de l'URL :
+              imageUrl: `${req.protocol}://${req.get('host')}/images/${
+                req.file.filename //  req.protocol = http ou https, req.get("host") = localhost3000 ou racine server, /images/, req.file.filename
+              }`
+            })
+            sauce
+              .save() // Enregistre la sauce dans la DB et renvoie une promesses
+              .then(() =>
+                res.status(201).json({ message: 'Objet enregistré !' })
+              ) // Une fois la réponse retournée faire un retour au frontend sinon dit que la requete n'est pas aboutie
+              .catch(error => res.status(400).json({ error }))
+            break
 
-        case false:
-          res.status(400).json({
-            message:
-              ' Oups ! Une erreur est survenue, vérifiez le contenu de la requête'
-          })
+          case false:
+            res.status(400).json({
+              message:
+                ' Oups ! Une erreur est survenue, vérifiez le contenu de la requête'
+            })
 
-        default:
-          res.status(500).json({ message: 'Erreur serveur' })
+          default:
+            res.status(500).json({ message: 'Erreur serveur' })
+        }
+      } else {
+        res.status(400).json({
+          message: ' Oups ! ID utilisateur éroné'
+        })
       }
     }
   })

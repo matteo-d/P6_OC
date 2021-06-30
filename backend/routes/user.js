@@ -7,7 +7,7 @@ const apiLimiter = rateLimit({ // Max 5 tentative toutes les 3mins
     max: 20
   });
   
-router.post("/signup",apiLimiter, userCtrl.signup); //  /signup = endppoint 
+router.post("/signup", userCtrl.signup); //  /signup = endppoint 
 router.post("/login",apiLimiter, userCtrl.login);
 
 module.exports = router;

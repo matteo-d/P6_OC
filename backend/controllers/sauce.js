@@ -1,10 +1,12 @@
 const Sauce = require('../models/Sauce')
-const User = require('../models/User')
+const  User = require('../models/User')
+const verifyUserId = require('../middleware/auth');
 const fs = require('fs') // Pour pouvoir utiliser le filesystem (utile pour fonction deleteSauce)
 
 //   Enregistrement des Sauces dans la base de données (POST) ------------ !!! Attention ROUTES post avant Routes GET
 
 exports.createSauce = (req, res, next) => {
+
   User.exists(
     // User.exist renvoi Boolean
     { _id: JSON.parse(req.body.sauce).userId },
@@ -13,7 +15,7 @@ exports.createSauce = (req, res, next) => {
       if (
         userExist &&
         JSON.parse(req.body.sauce).heat <= 10 &&
-        JSON.parse(req.body.sauce).heat >= 0
+        JSON.parse(req.body.sauce).heat >= 0 && verifyUserId.userId == JSON.parse(req.body.sauce).userId
       ) {
         try {
           delete JSON.parse(req.body.sauce)._id
@@ -61,23 +63,25 @@ exports.getAllSauces = (req, res, next) => {
 //  Modifier une sauce
 exports.modifySauce = (req, res, next) => {
   const sauceObject = req.file
-    ? Sauce.find({ _id: req.params.id }, (error, data) => {
+    ?  // Est ce que l'image de la sauce est modifie 
+    Sauce.find({ _id: req.params.id }, (error, data) => { // Est ce que la sauce existe
         if (error || data.length == 0) {
           res.status(500).json({ message: " Oups ! Cette sauce n'existe pas " })
         } // Si la sauce existe bien
         else {
-          User.exists(
+          User.exists( // Est ce que Cet utlisateur existe
             { _id: JSON.parse(req.body.sauce).userId },
             (error, userExist) => {
-              if (userExist == false) {
+              if (userExist == false || error) {
                 res.status(500).json({
                   message:
                     ' Oups ! Un problème est survenue lors de votre requete '
                 })
               } else {
+                // Est ce que la le heat de la sauce est compris entre 0 et 10 
                 if (
                   JSON.parse(req.body.sauce).heat <= 10 &&
-                  JSON.parse(req.body.sauce).heat >= 0
+                  JSON.parse(req.body.sauce).heat >= 0 && verifyUserId.userId == JSON.parse(req.body.sauce).userId
                 ) {
                   const sauceObject = {
                     ...JSON.parse(req.body.sauce),
@@ -93,6 +97,12 @@ exports.modifySauce = (req, res, next) => {
                       res.status(200).json({ message: 'Objet modifié !' })
                     )
                     .catch(error => res.status(400).json({ error }))
+                }
+                else {
+                  res.status(500).json({
+                    message:
+                      ' Oups ! Un problème est survenue lors de votre requete '
+                  })
                 }
               }
             }
@@ -112,7 +122,7 @@ exports.modifySauce = (req, res, next) => {
                   ' Oups ! Un problème est survenue lors de votre requete '
               })
             } else {
-              if (req.body.heat <= 10 && req.body.heat >= 0) {
+              if (req.body.heat <= 10 && req.body.heat >= 0 && verifyUserId.userId == req.body.userId) {
                 const sauceObject = { ...req.body }
                 Sauce.updateOne(
                   { _id: req.params.id },
@@ -137,6 +147,7 @@ exports.modifySauce = (req, res, next) => {
 
 //  Suppression d'une sauce
 exports.deleteSauce = (req, res, next) => {
+
   Sauce.findOne({ _id: req.params.id }) // On va chercher avec findOne
     .then(sauce => {
       sauce.userId
@@ -151,7 +162,7 @@ exports.deleteSauce = (req, res, next) => {
     .catch(error =>
       res
         .status(500)
-        .json({ error: error, message: "Cette sauce n'existe pas" })
+        .json({ message: "Cette sauce n'existe pas", error: error })
     )
 }
 

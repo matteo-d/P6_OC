@@ -38,7 +38,9 @@ app.use((req, res, next) => {
 
 
 // BODY PARSER
-app.use(bodyParser.json()); // Transforme le corp de la requete en JSON pour toutes les routes
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+app.use(bodyParser.raw());
 app.use(cors());
 // ROUTES IMAGES
 // express.static = dit a express de nosu servir le dossier static images

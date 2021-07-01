@@ -60,46 +60,79 @@ exports.getAllSauces = (req, res, next) => {
 
 //  Modifier une sauce
 exports.modifySauce = (req, res, next) => {
-
-
-  try {
-    Sauce.find({ _id: req.params.id }, (error, data) => {
-      if (error || data.length == 0) {
-        res.status(500).json({ message: " Oups ! Cette sauce n'existe pas " })
-      } // Si la sauce existe bien
-      else {
-        User.exists({ _id: req.body.userId }, (error, userExist) => {
-          if (userExist == false) {
-            res.status(500).json({
-              message: " Oups ! Cet utilisateur n'existe pas ",
-              error: error
-            })
-          } else {
-            if (req.body.heat <= 10 && req.body.heat >= 0) {
-              const sauceObject = { ...req.body }
-              Sauce.updateOne(
-                { _id: req.params.id },
-                { ...sauceObject, _id: req.params.id }
-              )
-                .then(() =>
-                  res.status(200).json({ message: 'Sauce modifié !' })
-                )
-                .catch(error => res.status(400).json({ error }))
-            } else {
-              res.status(500).json({
-                message: ' Oups ! Verifier le contenu de votre requête ',
-                error: error
-              })
+  const sauceObject = req.file
+    ? Sauce.find({ _id: req.params.id }, (error, data) => {
+        if (error || data.length == 0) {
+          res.status(500).json({ message: " Oups ! Cette sauce n'existe pas " })
+        } // Si la sauce existe bien
+        else {
+          User.exists(
+            { _id: JSON.parse(req.body.sauce).userId },
+            (error, userExist) => {
+              if (userExist == false) {
+                res.status(500).json({
+                  message:
+                    ' Oups ! Un problème est survenue lors de votre requete '
+                })
+              } else {
+                if (
+                  JSON.parse(req.body.sauce).heat <= 10 &&
+                  JSON.parse(req.body.sauce).heat >= 0
+                ) {
+                  const sauceObject = {
+                    ...JSON.parse(req.body.sauce),
+                    imageUrl: `${req.protocol}://${req.get('host')}/images/${
+                      req.file.filename
+                    }`
+                  }
+                  Sauce.updateOne(
+                    { _id: req.params.id },
+                    { ...sauceObject, _id: req.params.id }
+                  )
+                    .then(() =>
+                      res.status(200).json({ message: 'Objet modifié !' })
+                    )
+                    .catch(error => res.status(400).json({ error }))
+                }
+              }
             }
-          }
-        })
-      }
-    })
-  } catch {
-    res.status(500).json({
-      message: ' Oups ! Une erreur est survenue lors de la modification '
-    })
-  }
+          )
+        }
+      })
+    : // Si requete sans modifs image
+      Sauce.find({ _id: req.params.id }, (error, data) => {
+        if (error || data.length == 0) {
+          res.status(500).json({ message: " Oups ! Cette sauce n'existe pas " })
+        } // Si la sauce existe bien
+        else {
+          User.exists({ _id: req.body.userId }, (error, userExist) => {
+            if (userExist == false) {
+              res.status(500).json({
+                message:
+                  ' Oups ! Un problème est survenue lors de votre requete '
+              })
+            } else {
+              if (req.body.heat <= 10 && req.body.heat >= 0) {
+                const sauceObject = { ...req.body }
+                Sauce.updateOne(
+                  { _id: req.params.id },
+                  { ...sauceObject, _id: req.params.id }
+                )
+                  .then(() =>
+                    res.status(200).json({ message: 'Sauce modifié !' })
+                  )
+                  .catch(error => res.status(400).json({ error }))
+              } else {
+                res.status(500).json({
+                  message: ' Oups ! Verifier le contenu de votre requête ',
+                  error: error
+                })
+              }
+            }
+          })
+        }
+      })
+  // Si requete sans modifs image
 }
 
 //  Suppression d'une sauce

@@ -20,5 +20,13 @@ const storage = multer.diskStorage({ // diskStorage = on va l'enregistré dans l
   // Résultat du middleware = name + date + extension
 });
 
-module.exports = multer({ storage: storage }).single("image"); // On export notre objet storage et on dit que le fichier entrant doit être un seul fichier et de type image
 
+module.exports = multer({ storage: storage, fileFilter: (req, file, cb) => {
+  if ( file.mimetype == "image/png" || file.mimetype == "image/jpg" || file.mimetype == "image/jpeg" ) {
+    cb(null, true);
+  } else {
+    cb(null, false);
+    return cb(new Error('Vous devez envoyer une image!'));
+  }
+}
+}).single("image"); // On export notre objet storage et on dit que le fichier entrant doit être un seul fichier et de type image

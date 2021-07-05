@@ -6,3 +6,17 @@ exports.isValidHeat = (heat) => {
         else {
             return false }
 }
+
+exports.isValidSauceSchema = (req) => {
+
+    const neededKeys = ['name',
+    'manufacturer',
+    'description',
+    'mainPepper',
+    'heat',
+    'userId'];
+
+    if ((neededKeys.every(elem => Object.keys(req).includes(elem)))) 
+        return true
+  
+}

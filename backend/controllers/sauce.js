@@ -1,22 +1,21 @@
 const Sauce = require('../models/Sauce')
 const  User = require('../models/User')
 const verifyUserId = require('../middleware/auth');
-const fs = require('fs') // Pour pouvoir utiliser le filesystem (utile pour fonction deleteSauce)
+const middlewareSauce = require('../middleware/sauce');
+const middlewareUser = require('../middleware/user');
+const fs = require('fs'); // Pour pouvoir utiliser le filesystem (utile pour fonction deleteSauce)
 
 //   Enregistrement des Sauces dans la base de données (POST) ------------ !!! Attention ROUTES post avant Routes GET
 
 exports.createSauce = (req, res, next) => {
 
-  User.exists(
-    // User.exist renvoi Boolean
-    { _id: JSON.parse(req.body.sauce).userId },
-    (error, userExist) => {
-      // Verification que l'user Existe bien, Sauce heat -10 et requete contient une image
-      if (
-        userExist &&
-        JSON.parse(req.body.sauce).heat <= 10 &&
-        JSON.parse(req.body.sauce).heat >= 0 && verifyUserId.userId == JSON.parse(req.body.sauce).userId
-      ) {
+User.exists(
+  // User.exist renvoi Boolean
+  { _id: JSON.parse(req.body.sauce).userId },
+  (error, userExist) => {
+    // Verification que l'user Existe bien, Sauce heat -10 et requete contient une image
+    if (
+      userExist && middlewareSauce.isValidHeat(JSON.parse(req.body.sauce).heat) && middlewareUser.doJwtEgalUserId(verifyUserId.userId,JSON.parse(req.body.sauce).userId )) {
         try {
           delete JSON.parse(req.body.sauce)._id
           const sauce = new Sauce({
@@ -30,20 +29,23 @@ exports.createSauce = (req, res, next) => {
             .save() // Enregistre la sauce dans la DB et renvoie une promesses
             .then(() => res.status(201).json({ message: 'Objet enregistré !' })) // Une fois la réponse retournée faire un retour au frontend sinon dit que la requete n'est pas aboutie
             .catch(error => res.status(400).json({ error: error }))
-        } catch (error) {
+        } catch  {
           res.status(401).json({
             message: ' Vérifier le contenu de votre requête  '
           })
         }
-      } else {
-        console.log(error)
-        res.status(401).json({
-          message: ' Requête non autorisé  '
-        })
-      }
     }
-  )
+
+        else  {
+          res.status(401).json({
+            message: ' Requête non autorisée  '
+          })
+      }
+    
+  })
 }
+      
+
 
 //  Récupération d'une sauce spécifique
 exports.getOneSauce = (req, res, next) => {
@@ -64,8 +66,8 @@ exports.getAllSauces = (req, res, next) => {
 exports.modifySauce = (req, res, next) => {
   const sauceObject = req.file
     ?  // Est ce que l'image de la sauce est modifie 
-    Sauce.find({ _id: req.params.id }, (error, data) => { // Est ce que la sauce existe
-        if (error || data.length == 0) {
+    Sauce.find({ _id: req.params.id }, (error, sauceExist) => { // Est ce que la sauce existe
+        if (error || sauceExist.length == 0) {
           res.status(500).json({ message: " Oups ! Cette sauce n'existe pas " })
         } // Si la sauce existe bien
         else {
@@ -75,13 +77,12 @@ exports.modifySauce = (req, res, next) => {
               if (userExist == false || error) {
                 res.status(500).json({
                   message:
-                    ' Oups ! Un problème est survenue lors de votre requete '
+                    " Oups ! Cet utilisateur n'existe pas  "
                 })
               } else {
-                // Est ce que la le heat de la sauce est compris entre 0 et 10 
+                // Est ce que la le heat de la sauce est compris entre 0 et 10 ET  est ce que le token correspond à l'userId du body de la request 
                 if (
-                  JSON.parse(req.body.sauce).heat <= 10 &&
-                  JSON.parse(req.body.sauce).heat >= 0 && verifyUserId.userId == JSON.parse(req.body.sauce).userId
+                  middlewareSauce.isValidHeat(JSON.parse(req.body.sauce).heat) && middlewareUser.doJwtEgalUserId(verifyUserId.userId,JSON.parse(req.body.sauce).userId )
                 ) {
                   const sauceObject = {
                     ...JSON.parse(req.body.sauce),
@@ -97,7 +98,7 @@ exports.modifySauce = (req, res, next) => {
                       res.status(200).json({ message: 'Objet modifié !' })
                     )
                     .catch(error => res.status(400).json({ error }))
-                }
+                } 
                 else {
                   res.status(500).json({
                     message:
@@ -122,7 +123,7 @@ exports.modifySauce = (req, res, next) => {
                   ' Oups ! Un problème est survenue lors de votre requete '
               })
             } else {
-              if (req.body.heat <= 10 && req.body.heat >= 0 && verifyUserId.userId == req.body.userId) {
+              if ( middlewareSauce.isValidHeat(JSON.parse(req.body.sauce).heat) && middlewareUser.doJwtEgalUserId(verifyUserId.userId,JSON.parse(req.body.sauce).userId )) {
                 const sauceObject = { ...req.body }
                 Sauce.updateOne(
                   { _id: req.params.id },
@@ -150,20 +151,21 @@ exports.deleteSauce = (req, res, next) => {
 
   Sauce.findOne({ _id: req.params.id }) // On va chercher avec findOne
     .then(sauce => {
-      sauce.userId
+     if( sauce.userId == verifyUserId) {
+    
       const filename = sauce.imageUrl.split('/images/')[1] // Retourne un tableau avec ce qu'il y a avant et après images, on récupère le nom du fichier en [1]
+    
       fs.unlink(`images/${filename}`, () => {
         // fs.unlink supprimer l'image au chemin indiqué
         Sauce.deleteOne({ _id: req.params.id }) // Une fois que l'image a été supprimer on supprime la sauce de la Base de donnée
           .then(() => res.status(200).json({ message: 'Objet supprimé !' }))
           .catch(error => res.status(400).json({ error: error }))
       })
-    })
-    .catch(error =>
-      res
-        .status(500)
-        .json({ message: "Cette sauce n'existe pas", error: error })
-    )
+    }
+    else {
+      res.status(400).json({ message : "Sauce inexistante ou Token erroné" })
+    }
+})
 }
 
 // Gestion like / dislike
@@ -172,7 +174,8 @@ exports.likeSauce = (req, res, next) => {
     case 0: // Cas ou on annule son like / dislike
       Sauce.findOne({ _id: req.params.id })
         .then(sauce => {
-          if (sauce.usersLiked.find(user => user === req.body.userId)) {
+          if (sauce.usersLiked.find(user => user === req.body.userId) && req.body.userId == verifyUserId) {
+            console.log(verifyUserId)
             Sauce.updateOne(
               { _id: req.params.id },
               {
@@ -194,7 +197,7 @@ exports.likeSauce = (req, res, next) => {
             // check that the user hasn't already diliked the sauce
           }
 
-          if (sauce.usersDisliked.find(user => user === req.body.userId)) {
+          if (sauce.usersDisliked.find(user => user === req.body.userId) && req.body.userId == verifyUserId) {
             Sauce.updateOne(
               { _id: req.params.id },
               {
@@ -217,7 +220,7 @@ exports.likeSauce = (req, res, next) => {
           if (
             sauce.usersDisliked.find(user => user === req.body.userId) ==
               undefined &&
-            sauce.usersLiked.find(user => user == req.body.userId) == undefined
+            sauce.usersLiked.find(user => user == req.body.userId) == undefined && req.body.userId == verifyUserId
           ) {
             res.status(400).json({ message: 'Aucun dislike ou like a annulé ' })
           }
@@ -234,7 +237,7 @@ exports.likeSauce = (req, res, next) => {
     case 1: // Cas ou on like
       Sauce.findOne({ _id: req.params.id }).then(sauce => {
         if (
-          sauce.usersLiked.find(user => user === req.body.userId) ||
+          sauce.usersLiked.find(user => user === req.body.userId)  ||
           sauce.usersDisliked.find(user => user === req.body.userId)
         ) {
           res.status(400).json({
@@ -243,6 +246,7 @@ exports.likeSauce = (req, res, next) => {
           })
           // check that the user hasn't already diliked the sauce
         } else {
+          if (req.body.userId == verifyUserId) {
           Sauce.updateOne(
             { _id: req.params.id },
             {
@@ -260,6 +264,10 @@ exports.likeSauce = (req, res, next) => {
               res.status(400).json({ error: error })
             })
         }
+        else {
+          res.status(401).json({ message: "TOKEN ne correspond pas à l'userID de la requête" })
+        }
+      }
       })
 
       break
@@ -276,6 +284,7 @@ exports.likeSauce = (req, res, next) => {
           })
           // check that the user hasn't already diliked the sauce
         } else {
+          if (req.body.userId == verifyUserId) {
           Sauce.updateOne(
             { _id: req.params.id },
             {
@@ -293,6 +302,10 @@ exports.likeSauce = (req, res, next) => {
               res.status(400).json({ error: error })
             })
         }
+        else {
+          res.status(401).json({ message: "TOKEN ne correspond pas à l'userID de la requête" })
+        }
+      }
       })
 
       break

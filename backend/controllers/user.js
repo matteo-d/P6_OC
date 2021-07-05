@@ -3,15 +3,13 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 require("dotenv").config();
 const TOKEN = process.env.TOKEN;
+const middlewareUser = require("../middleware/user");
 // Routes Récupération de la liste de Sauce en vente( GET )
 
-isValidPassword = (password) => {
-  return /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{6,}$/.test(password);
-};
 
 exports.signup = (req, res, next) => {
   // La fonction de hashage de bcrypt est asynchrone
-  if (isValidPassword(req.body.password)) {
+  if (middlewareUser.isValidPassword(req.body.password)) {
     bcrypt
       .hash(req.body.password, 10) // Ici on hash 10x le mdp
       .then((hash) => {

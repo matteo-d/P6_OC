@@ -1,21 +1,28 @@
 const Sauce = require('../models/Sauce')
-const  User = require('../models/User')
-const verifyUserId = require('../middleware/auth');
-const middlewareSauce = require('../middleware/sauce');
-const middlewareUser = require('../middleware/user');
-const fs = require('fs'); // Pour pouvoir utiliser le filesystem (utile pour fonction deleteSauce)
+const User = require('../models/User')
+const verifyUserId = require('../middleware/auth')
+const middlewareSauce = require('../middleware/sauce')
+const middlewareUser = require('../middleware/user')
+const fs = require('fs') // Pour pouvoir utiliser le filesystem (utile pour fonction deleteSauce)
 
 //   Enregistrement des Sauces dans la base de données (POST) ------------ !!! Attention ROUTES post avant Routes GET
 
-exports.createSauce = (req, res, next) => {
+exports.createSauce = (req, res, next) => { 
+if (req.body.sauce !== undefined) { 
+  User.exists(
+    // User.exist renvoi Boolean
+    { _id: JSON.parse(req.body.sauce).userId },
+    (error, userExist) => {
+      // Verification que l'user Existe bien, Sauce heat -10 et requete contient une image
 
-User.exists(
-  // User.exist renvoi Boolean
-  { _id: JSON.parse(req.body.sauce).userId },
-  (error, userExist) => {
-    // Verification que l'user Existe bien, Sauce heat -10 et requete contient une image
-    if (
-      userExist && middlewareSauce.isValidHeat(JSON.parse(req.body.sauce).heat) && middlewareUser.doJwtEgalUserId(verifyUserId.userId,JSON.parse(req.body.sauce).userId )) {
+      if (
+        userExist &&
+        middlewareSauce.isValidHeat(JSON.parse(req.body.sauce).heat) &&
+        middlewareUser.doJwtEgalUserId(
+          verifyUserId.userId,
+          JSON.parse(req.body.sauce).userId
+        )
+      ) {
         try {
           delete JSON.parse(req.body.sauce)._id
           const sauce = new Sauce({
@@ -29,24 +36,25 @@ User.exists(
             .save() // Enregistre la sauce dans la DB et renvoie une promesses
             .then(() => res.status(201).json({ message: 'Objet enregistré !' })) // Une fois la réponse retournée faire un retour au frontend sinon dit que la requete n'est pas aboutie
             .catch(error => res.status(400).json({ error: error }))
-        } catch  {
+        } catch {
           res.status(401).json({
             message: ' Vérifier le contenu de votre requête  '
           })
         }
-    }
-
-        else  {
-          res.status(401).json({
-            message: ' Requête non autorisée  '
-          })
+      } else {
+        res.status(401).json({
+          message: ' Requête non autorisée  '
+        })
       }
-    
+    }
+  )
+}
+else {
+  res.status(401).json({
+    message: ' Corps de la requête non défini  '
   })
 }
-      
-
-
+}
 //  Récupération d'une sauce spécifique
 exports.getOneSauce = (req, res, next) => {
   // LE ":id" indique a express que la route est dynamique
@@ -65,24 +73,31 @@ exports.getAllSauces = (req, res, next) => {
 //  Modifier une sauce
 exports.modifySauce = (req, res, next) => {
   const sauceObject = req.file
-    ?  // Est ce que l'image de la sauce est modifie 
-    Sauce.find({ _id: req.params.id }, (error, sauceExist) => { // Est ce que la sauce existe
+    ? // Est ce que l'image de la sauce est modifie
+      Sauce.find({ _id: req.params.id }, (error, sauceExist) => {
+        // Est ce que la sauce existe
         if (error || sauceExist.length == 0) {
           res.status(500).json({ message: " Oups ! Cette sauce n'existe pas " })
         } // Si la sauce existe bien
         else {
-          User.exists( // Est ce que Cet utlisateur existe
+          User.exists(
+            // Est ce que Cet utlisateur existe
             { _id: JSON.parse(req.body.sauce).userId },
             (error, userExist) => {
               if (userExist == false || error) {
                 res.status(500).json({
-                  message:
-                    " Oups ! Cet utilisateur n'existe pas  "
+                  message: " Oups ! Cet utilisateur n'existe pas  "
                 })
               } else {
-                // Est ce que la le heat de la sauce est compris entre 0 et 10 ET  est ce que le token correspond à l'userId du body de la request 
+                // Est ce que la le heat de la sauce est compris entre 0 et 10 ET  est ce que le token correspond à l'userId du body de la request
                 if (
-                  middlewareSauce.isValidHeat(JSON.parse(req.body.sauce).heat) && middlewareUser.doJwtEgalUserId(verifyUserId.userId,JSON.parse(req.body.sauce).userId )
+                  middlewareSauce.isValidHeat(
+                    JSON.parse(req.body.sauce).heat
+                  ) &&
+                  middlewareUser.doJwtEgalUserId(
+                    verifyUserId.userId,
+                    JSON.parse(req.body.sauce).userId
+                  )
                 ) {
                   const sauceObject = {
                     ...JSON.parse(req.body.sauce),
@@ -98,8 +113,7 @@ exports.modifySauce = (req, res, next) => {
                       res.status(200).json({ message: 'Objet modifié !' })
                     )
                     .catch(error => res.status(400).json({ error }))
-                } 
-                else {
+                } else {
                   res.status(500).json({
                     message:
                       ' Oups ! Un problème est survenue lors de votre requete '
@@ -123,7 +137,11 @@ exports.modifySauce = (req, res, next) => {
                   ' Oups ! Un problème est survenue lors de votre requete '
               })
             } else {
-              if ( middlewareSauce.isValidHeat(JSON.parse(req.body.sauce).heat) && middlewareUser.doJwtEgalUserId(verifyUserId.userId,JSON.parse(req.body.sauce).userId )) {
+              if (
+                req.body.heat <= 10 &&
+                req.body.heat >= 0 &&
+                verifyUserId.userId == req.body.userId
+              ) {
                 const sauceObject = { ...req.body }
                 Sauce.updateOne(
                   { _id: req.params.id },
@@ -148,24 +166,21 @@ exports.modifySauce = (req, res, next) => {
 
 //  Suppression d'une sauce
 exports.deleteSauce = (req, res, next) => {
-
   Sauce.findOne({ _id: req.params.id }) // On va chercher avec findOne
     .then(sauce => {
-     if( sauce.userId == verifyUserId) {
-    
-      const filename = sauce.imageUrl.split('/images/')[1] // Retourne un tableau avec ce qu'il y a avant et après images, on récupère le nom du fichier en [1]
-    
-      fs.unlink(`images/${filename}`, () => {
-        // fs.unlink supprimer l'image au chemin indiqué
-        Sauce.deleteOne({ _id: req.params.id }) // Une fois que l'image a été supprimer on supprime la sauce de la Base de donnée
-          .then(() => res.status(200).json({ message: 'Objet supprimé !' }))
-          .catch(error => res.status(400).json({ error: error }))
-      })
-    }
-    else {
-      res.status(400).json({ message : "Sauce inexistante ou Token erroné" })
-    }
-})
+      if (middlewareUser.doJwtEgalUserId(verifyUserId.userId, sauce.userId)) {
+        const filename = sauce.imageUrl.split('/images/')[1] // Retourne un tableau avec ce qu'il y a avant et après images, on récupère le nom du fichier en [1]
+
+        fs.unlink(`images/${filename}`, () => {
+          // fs.unlink supprimer l'image au chemin indiqué
+          Sauce.deleteOne({ _id: req.params.id }) // Une fois que l'image a été supprimer on supprime la sauce de la Base de donnée
+            .then(() => res.status(200).json({ message: 'Objet supprimé !' }))
+            .catch(error => res.status(400).json({ error: error }))
+        })
+      } else {
+        res.status(400).json({ message: 'Sauce inexistante ou Token erroné' })
+      }
+    })
 }
 
 // Gestion like / dislike
@@ -174,7 +189,10 @@ exports.likeSauce = (req, res, next) => {
     case 0: // Cas ou on annule son like / dislike
       Sauce.findOne({ _id: req.params.id })
         .then(sauce => {
-          if (sauce.usersLiked.find(user => user === req.body.userId) && req.body.userId == verifyUserId) {
+          if (
+            sauce.usersLiked.find(user => user === req.body.userId) &&
+            req.body.userId == verifyUserId
+          ) {
             console.log(verifyUserId)
             Sauce.updateOne(
               { _id: req.params.id },
@@ -197,7 +215,10 @@ exports.likeSauce = (req, res, next) => {
             // check that the user hasn't already diliked the sauce
           }
 
-          if (sauce.usersDisliked.find(user => user === req.body.userId) && req.body.userId == verifyUserId) {
+          if (
+            sauce.usersDisliked.find(user => user === req.body.userId) &&
+            req.body.userId == verifyUserId
+          ) {
             Sauce.updateOne(
               { _id: req.params.id },
               {
@@ -220,7 +241,9 @@ exports.likeSauce = (req, res, next) => {
           if (
             sauce.usersDisliked.find(user => user === req.body.userId) ==
               undefined &&
-            sauce.usersLiked.find(user => user == req.body.userId) == undefined && req.body.userId == verifyUserId
+            sauce.usersLiked.find(user => user == req.body.userId) ==
+              undefined &&
+            req.body.userId == verifyUserId
           ) {
             res.status(400).json({ message: 'Aucun dislike ou like a annulé ' })
           }
@@ -237,7 +260,7 @@ exports.likeSauce = (req, res, next) => {
     case 1: // Cas ou on like
       Sauce.findOne({ _id: req.params.id }).then(sauce => {
         if (
-          sauce.usersLiked.find(user => user === req.body.userId)  ||
+          sauce.usersLiked.find(user => user === req.body.userId) ||
           sauce.usersDisliked.find(user => user === req.body.userId)
         ) {
           res.status(400).json({
@@ -247,27 +270,30 @@ exports.likeSauce = (req, res, next) => {
           // check that the user hasn't already diliked the sauce
         } else {
           if (req.body.userId == verifyUserId) {
-          Sauce.updateOne(
-            { _id: req.params.id },
-            {
-              $inc: { likes: 1 },
-              $push: { usersLiked: req.body.userId },
-              _id: req.params.id
-            }
-          )
-            .then(() => {
-              res
-                .status(201)
-                .json({ message: 'Ton Like a été pris en compte!' })
-            })
-            .catch(error => {
-              res.status(400).json({ error: error })
-            })
+            Sauce.updateOne(
+              { _id: req.params.id },
+              {
+                $inc: { likes: 1 },
+                $push: { usersLiked: req.body.userId },
+                _id: req.params.id
+              }
+            )
+              .then(() => {
+                res
+                  .status(201)
+                  .json({ message: 'Ton Like a été pris en compte!' })
+              })
+              .catch(error => {
+                res.status(400).json({ error: error })
+              })
+          } else {
+            res
+              .status(401)
+              .json({
+                message: "TOKEN ne correspond pas à l'userID de la requête"
+              })
+          }
         }
-        else {
-          res.status(401).json({ message: "TOKEN ne correspond pas à l'userID de la requête" })
-        }
-      }
       })
 
       break
@@ -285,27 +311,30 @@ exports.likeSauce = (req, res, next) => {
           // check that the user hasn't already diliked the sauce
         } else {
           if (req.body.userId == verifyUserId) {
-          Sauce.updateOne(
-            { _id: req.params.id },
-            {
-              $inc: { dislikes: 1 },
-              $push: { usersDisliked: req.body.userId },
-              _id: req.params.id
-            }
-          )
-            .then(() => {
-              res
-                .status(201)
-                .json({ message: 'Ton dislike a été pris en compte!' })
-            })
-            .catch(error => {
-              res.status(400).json({ error: error })
-            })
+            Sauce.updateOne(
+              { _id: req.params.id },
+              {
+                $inc: { dislikes: 1 },
+                $push: { usersDisliked: req.body.userId },
+                _id: req.params.id
+              }
+            )
+              .then(() => {
+                res
+                  .status(201)
+                  .json({ message: 'Ton dislike a été pris en compte!' })
+              })
+              .catch(error => {
+                res.status(400).json({ error: error })
+              })
+          } else {
+            res
+              .status(401)
+              .json({
+                message: "TOKEN ne correspond pas à l'userID de la requête"
+              })
+          }
         }
-        else {
-          res.status(401).json({ message: "TOKEN ne correspond pas à l'userID de la requête" })
-        }
-      }
       })
 
       break

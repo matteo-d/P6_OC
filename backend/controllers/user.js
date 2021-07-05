@@ -9,7 +9,7 @@ const middlewareUser = require("../middleware/user");
 
 exports.signup = (req, res, next) => {
   // La fonction de hashage de bcrypt est asynchrone
-  if (middlewareUser.isValidPassword(req.body.password)) {
+  if (middlewareUser.isValidPassword(req.body.password) && middlewareUser.isValidEmail(req.body.email)) {
     bcrypt
       .hash(req.body.password, 10) // Ici on hash 10x le mdp
       .then((hash) => {
@@ -30,7 +30,7 @@ exports.signup = (req, res, next) => {
       .status(401)
       .json({
         message:
-          "OUPS ! Votre mot de passe doit contenir au moins: 1 Majuscule, 1 Minuscule, 1 Chiffre et 6 caractères ",
+          "OUPS ! Votre mot de passe et/ou email est erroné ",
       }); // Error 500 = Error server
   }
 };

@@ -5,7 +5,6 @@ const middlewareSauce = require('../middleware/sauce')
 const middlewareUser = require('../middleware/user')
 const fs = require('fs') // Pour pouvoir utiliser le filesystem (utile pour fonction deleteSauce)
 
-
 exports.createSauce = (req, res, next) => {
   try {
     if (
@@ -81,40 +80,91 @@ exports.getAllSauces = (req, res, next) => {
     .catch(error => res.status(400).json({ error }))
 }
 
-
-
 //  Modifier une sauce
 exports.modifySauce = (req, res, next) => {
- req.file
-    ?
-      Sauce.find({ _id: req.params.id }, (error, sauceExist) => {
-        if (error || sauceExist.length == 0) {
-          res.status(500).json({ message: " Oups ! Cette sauce n'existe pas " })
-        } // Si la sauce existe bien
-        else {
-          User.exists(
-            // Est ce que Cet utlisateur existe
-            { _id: JSON.parse(req.body.sauce).userId },
-            (error, userExist) => {
-              if (userExist == false || error) {
-                res.status(500).json({
-                  message: " Oups ! Cet utilisateur n'existe pas  "
-                })
-              } else {
-                // Est ce que la le heat de la sauce est compris entre 0 et 10 ET  est ce que le token correspond à l'userId du body de la request
-                if (
-                  JSON.parse(req.body.sauce) !== undefined &&
-                  middlewareSauce.isValidHeat(
-                    JSON.parse(req.body.sauce).heat
-                  ) &&
-                  middlewareUser.doJwtEgalUserId(
-                    verifyUserId.userId,
-                    JSON.parse(req.body.sauce).userId
+  switch (req.file == undefined) {
+    case true:
+      console.log("Contient pas d'image ")
+      try {
+        let sauce = req.body
+
+        if (
+          middlewareSauce.isValidHeat(sauce.heat) &&
+          middlewareUser.doJwtEgalUserId(verifyUserId.userId, sauce.userId)
+        ) {
+          Sauce.find({ _id: req.params.id }, (error, sauceExist) => {
+            // Est ce que la sauce existe
+            if (error || sauceExist.length == 0) {
+              res
+                .status(500)
+                .json({ message: " Oups ! Cette sauce n'existe pas " })
+            } // Si la sauce existe bien
+            else {
+              console.log('Sauce trouvé')
+            }
+            User.exists(
+              // Est ce que Cet utlisateur existe
+              { _id: req.body.userId },
+              (error, userExist) => {
+                if (userExist == false || error) {
+                  res.status(500).json({
+                    message: " Oups ! Cet utilisateur n'existe pas  "
+                  })
+                } else {
+                  console.log('User trouvé')
+                  const sauceObject = { ...req.body }
+                  Sauce.updateOne(
+                    { _id: req.params.id },
+                    { ...sauceObject, _id: req.params.id }
                   )
-                ) {
-              
+                    .then(() =>
+                      res.status(200).json({ message: 'Sauce modifié !' })
+                    )
+                    .catch(error => res.status(400).json({ error }))
+                }
+              }
+            )
+          })
+        } else {
+          console.log('Problème dans le heat ou token')
+        }
+      } catch {
+        console.log('Erreur 500')
+      }
+
+      break
+
+    case false:
+      console.log('Contient une image ')
+      try {
+        let sauce = JSON.parse(req.body.sauce)
+        if (
+          sauce !== undefined &&
+          middlewareSauce.isValidHeat(sauce.heat) &&
+          middlewareUser.doJwtEgalUserId(verifyUserId.userId, sauce.userId)
+        ) {
+          Sauce.find({ _id: req.params.id }, (error, sauceExist) => {
+            // Est ce que la sauce existe
+            if (error || sauceExist.length == 0) {
+              res
+                .status(500)
+                .json({ message: " Oups ! Cette sauce n'existe pas " })
+            } // Si la sauce existe bien
+            else {
+              console.log('Sauce trouvé')
+            }
+            User.exists(
+              // Est ce que Cet utlisateur existe
+              { _id: sauce.userId },
+              (error, userExist) => {
+                if (userExist == false || error) {
+                  res.status(500).json({
+                    message: " Oups ! Cet utilisateur n'existe pas  "
+                  })
+                } else {
+                  console.log('User trouvé')
                   const sauceObject = {
-                    ...JSON.parse(req.body.sauce),
+                    ...sauce,
                     imageUrl: `${req.protocol}://${req.get('host')}/images/${
                       req.file.filename
                     }`
@@ -128,62 +178,21 @@ exports.modifySauce = (req, res, next) => {
                       res.status(200).json({ message: 'Objet modifié !' })
                     )
                     .catch(error => res.status(400).json({ error }))
-                } else {
-                  res.status(500).json({
-                    message:
-                      ' Oups ! Un problème est survenue lors de votre requete '
-                  })
                 }
               }
-            }
-          )
+            )
+          })
+        } else {
+          console.log('Problème dans le heat ou token')
         }
-      })
-    : // Si requete sans modifs image
-  
-  Sauce.find({ _id: req.params.id }, (error, sauceExist) => {
-    // Est ce que la sauce existe
-    if (error || sauceExist.length == 0) {
-      res.status(500).json({ message: " Oups ! Cette sauce n'existe pas " })
-    } // Si la sauce existe bien
-    else {
-      User.exists(
-        // Est ce que Cet utlisateur existe
-        { _id: req.body.userId },
-        (error, userExist) => {
-          if (userExist == false || error) {
-            res.status(500).json({
-              message: " Oups ! Cet utilisateur n'existe pas  "
-            })
-          } else {
-            // Est ce que la le heat de la sauce est compris entre 0 et 10 ET  est ce que le token correspond à l'userId du body de la request
-            if (
-              middlewareSauce.isValidHeat(req.body.heat) &&
-              middlewareUser.doJwtEgalUserId(
-                verifyUserId.userId,
-                req.body.userId
-              )
-            ) {
-              const sauceObject = { ...req.body }
-              Sauce.updateOne(
-                { _id: req.params.id },
-                { ...sauceObject, _id: req.params.id }
-              )
-                .then(() =>
-                  res.status(200).json({ message: 'Sauce modifié !' })
-                )
-                .catch(error => res.status(400).json({ error }))
-            } else {
-              res.status(500).json({
-                message: ' Oups ! Verifier le contenu de votre requête ',
-                error: error
-              })
-            }
-          }
-        }
-      )
-    }
-  })
+      } catch {
+        console.log('Erreur 500')
+      }
+      break
+
+    default:
+      console.log('default')
+  }
 }
 
 //  Suppression d'une sauce
@@ -215,7 +224,6 @@ exports.likeSauce = (req, res, next) => {
             sauce.usersLiked.find(user => user === req.body.userId) &&
             req.body.userId == verifyUserId.userId
           ) {
-           
             Sauce.updateOne(
               { _id: req.params.id },
               {
@@ -291,7 +299,6 @@ exports.likeSauce = (req, res, next) => {
           })
           // check that the user hasn't already diliked the sauce
         } else {
-        
           if (req.body.userId == verifyUserId.userId) {
             Sauce.updateOne(
               { _id: req.params.id },

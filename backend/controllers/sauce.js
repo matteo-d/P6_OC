@@ -5,7 +5,6 @@ const middlewareSauce = require('../middleware/sauce')
 const middlewareUser = require('../middleware/user')
 const fs = require('fs') // Pour pouvoir utiliser le filesystem (utile pour fonction deleteSauce)
 
-//   Enregistrement des Sauces dans la base de données (POST) ------------ !!! Attention ROUTES post avant Routes GET
 
 exports.createSauce = (req, res, next) => {
   try {
@@ -82,19 +81,6 @@ exports.getAllSauces = (req, res, next) => {
     .catch(error => res.status(400).json({ error }))
 }
 
-userExist = async (param) =>{
-  if (typeof param == "undefined") {
-    param = "";
-  }
-  try {
-    const response = await fetch(`${APIurl}${param}`);
-    const products = await response.json();
-    console.log(" Connexion au serveur OK !");
-    return products;
-  } catch (e) {
-    console.log(e);
-  }
-}
 
 
 //  Modifier une sauce
@@ -227,9 +213,9 @@ exports.likeSauce = (req, res, next) => {
         .then(sauce => {
           if (
             sauce.usersLiked.find(user => user === req.body.userId) &&
-            req.body.userId == verifyUserId
+            req.body.userId == verifyUserId.userId
           ) {
-            console.log(verifyUserId)
+           
             Sauce.updateOne(
               { _id: req.params.id },
               {
@@ -253,7 +239,7 @@ exports.likeSauce = (req, res, next) => {
 
           if (
             sauce.usersDisliked.find(user => user === req.body.userId) &&
-            req.body.userId == verifyUserId
+            req.body.userId == verifyUserId.userId
           ) {
             Sauce.updateOne(
               { _id: req.params.id },
@@ -279,7 +265,7 @@ exports.likeSauce = (req, res, next) => {
               undefined &&
             sauce.usersLiked.find(user => user == req.body.userId) ==
               undefined &&
-            req.body.userId == verifyUserId
+            req.body.userId == verifyUserId.userId
           ) {
             res.status(400).json({ message: 'Aucun dislike ou like a annulé ' })
           }
@@ -349,7 +335,7 @@ exports.likeSauce = (req, res, next) => {
             Sauce.updateOne(
               { _id: req.params.id },
               {
-                $inc: { dislikes: 1 },
+                $inc: { dislikes: +1 },
                 $push: { usersDisliked: req.body.userId },
                 _id: req.params.id
               }

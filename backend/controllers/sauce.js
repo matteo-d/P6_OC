@@ -104,7 +104,7 @@ exports.modifySauce = (req, res, next) => {
             }
             User.exists(
               // Est ce que Cet utlisateur existe
-              { _id: req.body.userId },
+              { _id: sauce.userId },
               (error, userExist) => {
                 if (userExist == false || error) {
                   res.status(500).json({
@@ -126,10 +126,14 @@ exports.modifySauce = (req, res, next) => {
             )
           })
         } else {
-          console.log('Problème dans le heat ou token')
+          res
+          .status(500)
+          .json({ message: " Oups ! Requête non valide " })
         }
       } catch {
-        console.log('Erreur 500')
+        res
+        .status(500)
+        .json({ message: " Oups ! Requête impossible " })
       }
 
       break
@@ -183,10 +187,14 @@ exports.modifySauce = (req, res, next) => {
             )
           })
         } else {
-          console.log('Problème dans le heat ou token')
+          res
+                .status(500)
+                .json({ message: " Oups ! Requête non valide " })
         }
       } catch {
-        console.log('Erreur 500')
+        res
+        .status(500)
+        .json({ message: " Oups ! Requête Imposssible " })
       }
       break
 

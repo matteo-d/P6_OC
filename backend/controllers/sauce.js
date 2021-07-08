@@ -194,19 +194,12 @@ exports.modifySauce = (req, res, next) => {
                     Sauce.findOne({ _id: req.params.id }).then((sauce) => {
                         const filename = sauce.imageUrl.split("/images/")[1]; // Retourne un tableau avec ce qu'il y a avant et après images, on récupère le nom du fichier en [1]
                         console.log(filename);
-                        fs.unlink(`images/${filename}`)
-
-                            .then(() =>
-                                res
-                                    .status(200)
-                                    .json({
-                                        message: "Ancienne image supprimé !",
-                                    })
-                            )
-                            .catch((error) =>
-                                res.status(400).json({ error: error })
-                            );
+                        fs.unlink(`images/${filename}`, () => {
+                            // fs.unlink supprimer l'image au chemin indiqué
+                     console.log('OK ancienne image supprimé')
+                        });
                     });
+
                     const sauceObject = {
                         ...sauce,
                         imageUrl: `${req.protocol}://${req.get(

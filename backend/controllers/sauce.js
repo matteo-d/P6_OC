@@ -12,7 +12,7 @@ const doUserExist = async (userId) => {
             { _id: userId }
         );
         console.log(user);
-    } catch  {
+    } catch {
         res.status(500).json({
             message: " Oups ! Cet utilisateur n'existe pas  ",
         });
@@ -20,55 +20,55 @@ const doUserExist = async (userId) => {
 };
 
 
-exports.createSauce = (req, res, next) => {
-   
-        if (
-            req.body.sauce !== undefined &&
-            middlewareSauce.isValidSauceSchema(JSON.parse(req.body.sauce)) &&
-            doUserExist(JSON.parse(req.body.sauce).userId ) &&
-            middlewareSauce.isValidHeat(
-                JSON.parse(req.body.sauce).heat
-            ) && // Verification que l'user Existe bien, Sauce heat -10 et requete contient une image
-            middlewareUser.doJwtEgalUserId(
-                verifyUserId.userId,
-                JSON.parse(req.body.sauce).userId
-            )
-        ) {
-                        try {
-                            delete JSON.parse(req.body.sauce)._id;
-                            const sauce = new Sauce({
-                                ...JSON.parse(req.body.sauce), // Opérateur spread pour dire que l'on copie les champs avec le schema de mongoose
-                                //Composition de l'URL :
-                                imageUrl: `${req.protocol}://${req.get(
-                                    "host"
-                                )}/images/${
-                                    req.file.filename //  req.protocol = http ou https, req.get("host") = localhost3000 ou racine server, /images/, req.file.filename
-                                }`,
-                            });
-                            sauce
-                                .save() // Enregistre la sauce dans la DB et renvoie une promesses
-                                .then(() =>
-                                    res
-                                        .status(201)
-                                        .json({ message: "Objet enregistré !" })
-                                )
-                                .catch((error) =>
-                                    res.status(400).json({ error: error })
-                                );
-                        } catch {
-                            res.status(401).json({
-                                message:
-                                    " Vérifier le contenu de votre requête  ",
-                            });
-                        }
-                    } else {
-                        res.status(401).json({
-                            message: " Requête non autorisée  ",
-                        });
-                    }
-                }
+const findSauce = async (sauceId) => {
+    try {
+        const sauce = await Sauce.find({ _id: sauceId })
+        console.log(sauce);
+    } catch {
+        res.status(500).json({
+            message: " Oups ! Cette sauce n'existe pas  ",
+        });
+    }
+};
 
-            
+
+exports.createSauce = (req, res, next) => {
+    if (
+        req.body.sauce !== undefined &&
+        middlewareSauce.isValidSauceSchema(JSON.parse(req.body.sauce)) &&
+        doUserExist(JSON.parse(req.body.sauce).userId) &&
+        middlewareSauce.isValidHeat(JSON.parse(req.body.sauce).heat) && // Verification que l'user Existe bien, Sauce heat -10 et requete contient une image
+        middlewareUser.doJwtEgalUserId(
+            verifyUserId.userId,
+            JSON.parse(req.body.sauce).userId
+        )
+    ) {
+        try {
+            delete JSON.parse(req.body.sauce)._id;
+            const sauce = new Sauce({
+                ...JSON.parse(req.body.sauce), // Opérateur spread pour dire que l'on copie les champs avec le schema de mongoose
+                //Composition de l'URL :
+                imageUrl: `${req.protocol}://${req.get("host")}/images/${
+                    req.file.filename //  req.protocol = http ou https, req.get("host") = localhost3000 ou racine server, /images/, req.file.filename
+                }`,
+            });
+            sauce
+                .save() // Enregistre la sauce dans la DB et renvoie une promesses
+                .then(() =>
+                    res.status(201).json({ message: "Objet enregistré !" })
+                )
+                .catch((error) => res.status(400).json({ error: error }));
+        } catch {
+            res.status(401).json({
+                message: " Vérifier le contenu de votre requête  ",
+            });
+        }
+    } else {
+        res.status(401).json({
+            message: " Requête non autorisée  ",
+        });
+    }
+};
 
 //  Récupération d'une sauce spécifique
 exports.getOneSauce = (req, res, next) => {
@@ -98,34 +98,9 @@ exports.modifySauce = (req, res, next) => {
                     middlewareUser.doJwtEgalUserId(
                         verifyUserId.userId,
                         sauce.userId
-                    )
+                    ) && doUserExist(sauce.userId) && findSauce(req.params.id)
                 ) {
-                    User.exists(
-                        // Est ce que Cet utlisateur existe
-                        { _id: sauce.userId },
-                        (error, userExist) => {
-                            if (userExist == false || error) {
-                                res.status(500).json({
-                                    message:
-                                        " Oups ! Cet utilisateur n'existe pas  ",
-                                });
-                            } else {
-                                console.log("User trouvé");
-                            }
-                        }
-                    );
-
-                    Sauce.find({ _id: req.params.id }, (error, sauceExist) => {
-                        // Est ce que la sauce existe
-                        if (error || sauceExist.length == 0) {
-                            res.status(500).json({
-                                message: " Oups ! Cette sauce n'existe pas ",
-                            });
-                        } // Si la sauce existe bien
-                        else {
-                            console.log("Sauce trouvé");
-                        }
-                    });
+         
                     const sauceObject = { ...req.body };
                     Sauce.updateOne(
                         { _id: req.params.id },
@@ -159,35 +134,10 @@ exports.modifySauce = (req, res, next) => {
                     middlewareSauce.isValidHeat(sauce.heat) &&
                     middlewareUser.doJwtEgalUserId(
                         verifyUserId.userId,
-                        sauce.userId
+                        sauce.userId) && doUserExist(sauce.userId) && findSauce(req.params.id)
                     )
-                ) {
-                    User.exists(
-                        // Est ce que Cet utlisateur existe ?
-                        { _id: sauce.userId },
-                        (error, userExist) => {
-                            if (userExist == false || error) {
-                                res.status(500).json({
-                                    message:
-                                        " Oups ! Cet utilisateur n'existe pas  ",
-                                });
-                            } else {
-                                console.log("User trouvé");
-                            }
-                        }
-                    );
-                    // Est ce que la sauce existe ?
-                    Sauce.find({ _id: req.params.id }, (error, sauceExist) => {
-                        // Est ce que la sauce existe
-                        if (error || sauceExist.length == 0) {
-                            res.status(500).json({
-                                message: " Oups ! Cette sauce n'existe pas ",
-                            });
-                        } // Si la sauce existe bien
-                        else {
-                            console.log("Sauce trouvé");
-                        }
-                    });
+                 {
+                   
                     // Supprime l'ancienne image avant remplacement par nouvelle image
                     Sauce.findOne({ _id: req.params.id }).then((sauce) => {
                         const filename = sauce.imageUrl.split("/images/")[1]; // Retourne un tableau avec ce qu'il y a avant et après images, on récupère le nom du fichier en [1]

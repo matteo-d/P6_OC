@@ -5,26 +5,35 @@ const middlewareSauce = require("../middleware/sauce");
 const middlewareUser = require("../middleware/user");
 const fs = require("fs");
 
-exports.createSauce = (req, res, next) => {
+const doUserExist = async (userId) => {
     try {
+        const user = await User.exists(
+            // Est ce que Cet utlisateur existe ?
+            { _id: userId }
+        );
+        console.log(user);
+    } catch  {
+        res.status(500).json({
+            message: " Oups ! Cet utilisateur n'existe pas  ",
+        });
+    }
+};
+
+
+exports.createSauce = (req, res, next) => {
+   
         if (
             req.body.sauce !== undefined &&
-            middlewareSauce.isValidSauceSchema(JSON.parse(req.body.sauce))
+            middlewareSauce.isValidSauceSchema(JSON.parse(req.body.sauce)) &&
+            doUserExist(JSON.parse(req.body.sauce).userId ) &&
+            middlewareSauce.isValidHeat(
+                JSON.parse(req.body.sauce).heat
+            ) && // Verification que l'user Existe bien, Sauce heat -10 et requete contient une image
+            middlewareUser.doJwtEgalUserId(
+                verifyUserId.userId,
+                JSON.parse(req.body.sauce).userId
+            )
         ) {
-            User.exists(
-                // User.exists renvoi Boolean
-                { _id: JSON.parse(req.body.sauce).userId },
-                (error, userExist) => {
-                    if (
-                        userExist &&
-                        middlewareSauce.isValidHeat(
-                            JSON.parse(req.body.sauce).heat
-                        ) && // Verification que l'user Existe bien, Sauce heat -10 et requete contient une image
-                        middlewareUser.doJwtEgalUserId(
-                            verifyUserId.userId,
-                            JSON.parse(req.body.sauce).userId
-                        )
-                    ) {
                         try {
                             delete JSON.parse(req.body.sauce)._id;
                             const sauce = new Sauce({
@@ -58,19 +67,8 @@ exports.createSauce = (req, res, next) => {
                         });
                     }
                 }
-            );
-        } else {
-            res.status(401).json({
-                message: " Corps de la requête non défini  ",
-            });
-        }
-    } catch {
-        res.status(500).json({
-            message:
-                " Oups ! Un problème est survenue lors de la création de votre sauce ",
-        });
-    }
-};
+
+            
 
 //  Récupération d'une sauce spécifique
 exports.getOneSauce = (req, res, next) => {
@@ -196,7 +194,7 @@ exports.modifySauce = (req, res, next) => {
                         console.log(filename);
                         fs.unlink(`images/${filename}`, () => {
                             // fs.unlink supprimer l'image au chemin indiqué
-                     console.log('OK ancienne image supprimé')
+                            console.log("OK ancienne image effacé");
                         });
                     });
 
@@ -230,7 +228,9 @@ exports.modifySauce = (req, res, next) => {
             break;
 
         default:
-            console.log("default");
+            res.status(500).json({
+                message: " Oups ! Requête Imposssible ",
+            });
     }
 };
 

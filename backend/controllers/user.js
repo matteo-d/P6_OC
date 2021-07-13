@@ -3,10 +3,18 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 require("dotenv").config();
 const TOKEN = process.env.TOKEN;
-const middlewareUser = require("../middleware/user");
-// Routes Récupération de la liste de Sauce en vente( GET )
 
-const maskEmail = (email) => {
+isValidPassword = (password) => {
+    return /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{6,}$/.test(password);
+};
+
+isValidEmail = (email) => {
+    return /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/.test(
+        email
+    );
+};
+
+maskEmail = (email) => {
     let str = email;
     str = str.split("");
     let finalArr = [];
@@ -22,10 +30,7 @@ const maskEmail = (email) => {
 
 exports.signup = (req, res, next) => {
     // La fonction de hashage de bcrypt est asynchrone
-    if (
-        middlewareUser.isValidPassword(req.body.password) &&
-        middlewareUser.isValidEmail(req.body.email)
-    ) {
+    if (isValidPassword(req.body.password) && isValidEmail(req.body.email)) {
         bcrypt
             .hash(req.body.password, 10) // Ici on hash 10x le mdp
             .then((hash) => {
@@ -34,7 +39,7 @@ exports.signup = (req, res, next) => {
                     // Puis on créer un nouvel user
                     email: req.body.email, // On renregistre l'adresse qui est dans le corp de la requete ( ce que l'utilisateur a rentré )
                     password: hash, // Ici on enregistre bien directement le mdp crypté dans la DB et pas le mdp saisie
-                    maskedEmail: maskEmail(req.body.email)
+                    maskedEmail: maskEmail(req.body.email),
                 });
                 user.save() // On save le nouvel user dans la DB
                     .then(() =>

@@ -1,28 +1,68 @@
 const Sauce = require("../models/Sauce");
 const User = require("../models/User");
 const verifyUserId = require("../middleware/auth");
-const middlewareSauce = require("../middleware/sauce");
-const middlewareUser = require("../middleware/user");
 const fs = require("fs");
 
+// Does the JSON WEB TOKEN egal userId
+doJwtEgalUserId = (tokenUserId, userId) => {
+    if (tokenUserId == userId) {
+        return true;
+    }
+};
 
-// Si une value d'un objet passé en param et null ou undefined ou empty string return true
+isValidPassword = (password) => {
+    return /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{6,}$/.test(password);
+};
 
- const checkValuesValidity = (sauce) => {
+isValidEmail = (email) => {
+    return /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/.test(
+        email
+    );
+};
+
+isValidHeat = (heat) => {
+    try {
+        if (heat <= 10 && heat >= 0) {
+            return true;
+        } else {
+            return false;
+        }
+    } catch {
+        res.status(500).json({
+            message: " Oups ! Un problème est survenu lors de votre requête  ",
+        });
+    }
+};
+
+isValidSauceSchema = (req) => {
+    const neededKeys = [
+        "name",
+        "manufacturer",
+        "description",
+        "mainPepper",
+        "heat",
+        "userId",
+    ];
+
+    if (neededKeys.every((elem) => Object.keys(req).includes(elem)))
+        return true;
+};
+// Vérifie que l'objet ne contient pas de value égale a undefined, null ou empty string
+checkValuesValidity = (sauce) => {
     let arr = [];
     for (let key in sauce) {
-      arr.push(sauce[key] !== undefined && sauce[key] !== null && sauce[key] !== "");
+        arr.push(
+            sauce[key] !== undefined && sauce[key] !== null && sauce[key] !== ""
+        );
     }
     return arr.includes(false);
-  }
-
-const doUserExist = async (userId) => {
+};
+doUserExist = async (userId) => {
     try {
         const user = await User.exists(
             // Est ce que Cet utlisateur existe ?
             { _id: userId }
         );
-      
     } catch {
         res.status(500).json({
             message: " Oups ! Cet utilisateur n'existe pas  ",
@@ -30,10 +70,9 @@ const doUserExist = async (userId) => {
     }
 };
 
-const findSauce = async (sauceId) => {
+findSauce = async (sauceId) => {
     try {
         const sauce = await Sauce.find({ _id: sauceId });
-     
     } catch {
         res.status(500).json({
             message: " Oups ! Cette sauce n'existe pas  ",
@@ -44,13 +83,10 @@ const findSauce = async (sauceId) => {
 exports.createSauce = (req, res, next) => {
     if (
         req.body.sauce !== undefined &&
-        middlewareSauce.isValidSauceSchema(JSON.parse(req.body.sauce)) &&
+        isValidSauceSchema(JSON.parse(req.body.sauce)) &&
         doUserExist(JSON.parse(req.body.sauce).userId) &&
-        middlewareSauce.isValidHeat(JSON.parse(req.body.sauce).heat) &&
-        middlewareUser.doJwtEgalUserId(
-            verifyUserId.userId,
-            JSON.parse(req.body.sauce).userId
-        )
+        isValidHeat(JSON.parse(req.body.sauce).heat) &&
+        doJwtEgalUserId(verifyUserId.userId, JSON.parse(req.body.sauce).userId)
     ) {
         try {
             delete JSON.parse(req.body.sauce)._id;
@@ -99,19 +135,14 @@ exports.modifySauce = (req, res, next) => {
         req.file == undefined // Si la modification n'inclut pas un changement d'image
     ) {
         case true:
-            console.log("Contient pas d'image ");
             try {
                 let sauce = req.body;
 
-            
                 if (
                     sauce !== undefined &&
                     checkValuesValidity(sauce) == false &&
-                    middlewareSauce.isValidHeat(sauce.heat) &&
-                    middlewareUser.doJwtEgalUserId(
-                        verifyUserId.userId,
-                        sauce.userId
-                    ) &&
+                    isValidHeat(sauce.heat) &&
+                    doJwtEgalUserId(verifyUserId.userId, sauce.userId) &&
                     doUserExist(sauce.userId) &&
                     findSauce(req.params.id)
                 ) {
@@ -140,21 +171,14 @@ exports.modifySauce = (req, res, next) => {
             break;
 
         case false:
-            console.log("Contient une image ");
             try {
                 let sauce = JSON.parse(req.body.sauce);
-                console.log("validiity?")
-               console.log(checkValuesValidity(sauce))
-             
 
                 if (
                     sauce !== undefined &&
                     checkValuesValidity(sauce) == false &&
-                    middlewareSauce.isValidHeat(sauce.heat) &&
-                    middlewareUser.doJwtEgalUserId(
-                        verifyUserId.userId,
-                        sauce.userId
-                    ) &&
+                    isValidHeat(sauce.heat) &&
+                    doJwtEgalUserId(verifyUserId.userId, sauce.userId) &&
                     doUserExist(sauce.userId) &&
                     findSauce(req.params.id)
                 ) {
@@ -164,7 +188,6 @@ exports.modifySauce = (req, res, next) => {
 
                         fs.unlink(`images/${filename}`, () => {
                             // fs.unlink supprimer l'image au chemin indiqué
-                            console.log("OK ancienne image effacé");
                         });
                     });
 
@@ -207,9 +230,9 @@ exports.modifySauce = (req, res, next) => {
 //  Suppression d'une sauce
 exports.deleteSauce = (req, res, next) => {
     Sauce.findOne({ _id: req.params.id }).then((sauce) => {
-        if (middlewareUser.doJwtEgalUserId(verifyUserId.userId, sauce.userId)) {
+        if (doJwtEgalUserId(verifyUserId.userId, sauce.userId)) {
             const filename = sauce.imageUrl.split("/images/")[1]; // Retourne un tableau avec ce qu'il y a avant et après images, on récupère le nom du fichier en [1]
-        
+
             fs.unlink(`images/${filename}`, () => {
                 // fs.unlink supprimer l'image au chemin indiqué
                 Sauce.deleteOne({ _id: req.params.id }) // Une fois que l'image a été supprimer on supprime la sauce de la Base de donnée

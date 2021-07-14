@@ -3,23 +3,23 @@ const User = require("../models/User");
 const verifyUserId = require("../middleware/auth");
 const fs = require("fs");
 
-// Does the JSON WEB TOKEN egal userId
+// The JSON WEB TOKEN egal userId ?
 doJwtEgalUserId = (tokenUserId, userId) => {
     if (tokenUserId == userId) {
         return true;
     }
 };
-
+// Password contain at least 6 character, 1 letter uppercase, 1 letter lowercase , 1 number ?
 isValidPassword = (password) => {
     return /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{6,}$/.test(password);
 };
-
+// Email format validation
 isValidEmail = (email) => {
     return /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/.test(
         email
     );
 };
-
+//  Heat less than 10 and more than 0 ?
 isValidHeat = (heat) => {
     try {
         if (heat <= 10 && heat >= 0) {
@@ -33,7 +33,7 @@ isValidHeat = (heat) => {
         });
     }
 };
-
+// The request object contains all expected keys ?
 isValidSauceSchema = (req) => {
     const neededKeys = [
         "name",
@@ -47,7 +47,7 @@ isValidSauceSchema = (req) => {
     if (neededKeys.every((elem) => Object.keys(req).includes(elem)))
         return true;
 };
-// Vérifie que l'objet ne contient pas de value égale a undefined, null ou empty string
+// The request do not contain undefined, null or empty string value ?
 checkValuesValidity = (sauce) => {
     let arr = [];
     for (let key in sauce) {
@@ -57,19 +57,17 @@ checkValuesValidity = (sauce) => {
     }
     return arr.includes(false);
 };
+// The user exist in Database ?
 doUserExist = async (userId) => {
     try {
-        const user = await User.exists(
-            // Est ce que Cet utlisateur existe ?
-            { _id: userId }
-        );
+        const user = await User.exists({ _id: userId });
     } catch {
         res.status(500).json({
             message: " Oups ! Cet utilisateur n'existe pas  ",
         });
     }
 };
-
+// The sauce exist in Database ?
 findSauce = async (sauceId) => {
     try {
         const sauce = await Sauce.find({ _id: sauceId });
@@ -91,14 +89,14 @@ exports.createSauce = (req, res, next) => {
         try {
             delete JSON.parse(req.body.sauce)._id;
             const sauce = new Sauce({
-                ...JSON.parse(req.body.sauce), // Opérateur spread pour dire que l'on copie les champs avec le schema de mongoose
-                //Composition de l'URL :
+                ...JSON.parse(req.body.sauce),
+
                 imageUrl: `${req.protocol}://${req.get("host")}/images/${
-                    req.file.filename //  req.protocol = http ou https, req.get("host") = localhost3000 ou racine server, /images/, req.file.filename
+                    req.file.filename
                 }`,
             });
             sauce
-                .save() // Enregistre la sauce dans la DB et renvoie une promesses
+                .save()
                 .then(() =>
                     res.status(201).json({ message: "Objet enregistré !" })
                 )
@@ -115,24 +113,24 @@ exports.createSauce = (req, res, next) => {
     }
 };
 
-//  Récupération d'une sauce spécifique
+//  Get a specific sauce
 exports.getOneSauce = (req, res, next) => {
     Sauce.findOne({ _id: req.params.id })
         .then((sauce) => res.status(200).json(sauce))
         .catch((error) => res.status(404).json({ error }));
 };
 
-//  Récupération de la liste de Sauce en vente
+//  Get all sauces
 exports.getAllSauces = (req, res, next) => {
     Sauce.find()
         .then((sauces) => res.status(200).json(sauces))
         .catch((error) => res.status(400).json({ error }));
 };
 
-//  Modifier une sauce
+//  Modify a sauce
 exports.modifySauce = (req, res, next) => {
     switch (
-        req.file == undefined // Si la modification n'inclut pas un changement d'image
+        req.file == undefined // Case modification does not include image
     ) {
         case true:
             try {
@@ -170,7 +168,7 @@ exports.modifySauce = (req, res, next) => {
 
             break;
 
-        case false:
+        case false: // Case modification include new image
             try {
                 let sauce = JSON.parse(req.body.sauce);
 
@@ -182,13 +180,11 @@ exports.modifySauce = (req, res, next) => {
                     doUserExist(sauce.userId) &&
                     findSauce(req.params.id)
                 ) {
-                    // Supprime l'ancienne image avant remplacement par nouvelle image
+                    // Delete the image that the user want to replace
                     Sauce.findOne({ _id: req.params.id }).then((sauce) => {
-                        const filename = sauce.imageUrl.split("/images/")[1]; // Retourne un tableau avec ce qu'il y a avant et après images, on récupère le nom du fichier en [1]
+                        const filename = sauce.imageUrl.split("/images/")[1];
 
-                        fs.unlink(`images/${filename}`, () => {
-                            // fs.unlink supprimer l'image au chemin indiqué
-                        });
+                        fs.unlink(`images/${filename}`, () => {});
                     });
 
                     const sauceObject = {
@@ -227,15 +223,15 @@ exports.modifySauce = (req, res, next) => {
     }
 };
 
-//  Suppression d'une sauce
+//  Delete a sauce
 exports.deleteSauce = (req, res, next) => {
     Sauce.findOne({ _id: req.params.id }).then((sauce) => {
         if (doJwtEgalUserId(verifyUserId.userId, sauce.userId)) {
-            const filename = sauce.imageUrl.split("/images/")[1]; // Retourne un tableau avec ce qu'il y a avant et après images, on récupère le nom du fichier en [1]
+            const filename = sauce.imageUrl.split("/images/")[1]; 
 
             fs.unlink(`images/${filename}`, () => {
-                // fs.unlink supprimer l'image au chemin indiqué
-                Sauce.deleteOne({ _id: req.params.id }) // Une fois que l'image a été supprimer on supprime la sauce de la Base de donnée
+            
+                Sauce.deleteOne({ _id: req.params.id }) 
                     .then(() =>
                         res.status(200).json({ message: "Objet supprimé !" })
                     )
@@ -249,7 +245,7 @@ exports.deleteSauce = (req, res, next) => {
     });
 };
 
-// Handle / dislike
+// Handle Like / Dislike
 exports.likeSauce = (req, res, next) => {
     switch (req.body.like) {
         case 0: // Remove like / dislike
@@ -335,7 +331,7 @@ exports.likeSauce = (req, res, next) => {
             break;
         //Updates likes. likes = 1
 
-        case 1: // Cas ou on like
+        case 1: // Case Like 
             Sauce.findOne({ _id: req.params.id }).then((sauce) => {
                 if (
                     sauce.usersLiked.find((user) => user === req.body.userId) ||
@@ -375,7 +371,7 @@ exports.likeSauce = (req, res, next) => {
 
             break;
 
-        case -1: // Cas ou on dislike
+        case -1: // Case Dislike
             Sauce.findOne({ _id: req.params.id }).then((sauce) => {
                 if (
                     sauce.usersDisliked.find(

@@ -21,7 +21,7 @@ maskEmail = (email) => {
     let len = str.indexOf("@");
     str.forEach((item, pos) => {
         pos >= 1 && pos <= len - 2
-            ? finalArr.push("*")
+            ? finalArr.push("X")
             : finalArr.push(str[pos]);
     });
     let maskedEmail = finalArr.join("");

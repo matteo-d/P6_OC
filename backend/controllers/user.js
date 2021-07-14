@@ -1,19 +1,20 @@
-const bcrypt = require("bcrypt"); // hash le mdp, pour vérifier si mdp est bon compare le hash du mdp entré avec le hash enregistré dans la DB.
+const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 require("dotenv").config();
 const TOKEN = process.env.TOKEN;
 
+// Password contain at least 6 character, 1 letter uppercase, 1 letter lowercase , 1 number ?
 isValidPassword = (password) => {
     return /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{6,}$/.test(password);
 };
-
+// Email format validation
 isValidEmail = (email) => {
     return /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/.test(
         email
     );
 };
-
+// Email mask
 maskEmail = (email) => {
     let str = email;
     str = str.split("");
@@ -27,62 +28,55 @@ maskEmail = (email) => {
     let maskedEmail = finalArr.join("");
     return maskedEmail;
 };
-
+// Signup
 exports.signup = (req, res, next) => {
-    // La fonction de hashage de bcrypt est asynchrone
     if (isValidPassword(req.body.password) && isValidEmail(req.body.email)) {
         bcrypt
-            .hash(req.body.password, 10) // Ici on hash 10x le mdp
+            .hash(req.body.password, 10)
             .then((hash) => {
-                // On récupère le hash du mdp
                 const user = new User({
-                    // Puis on créer un nouvel user
-                    email: req.body.email, // On renregistre l'adresse qui est dans le corp de la requete ( ce que l'utilisateur a rentré )
-                    password: hash, // Ici on enregistre bien directement le mdp crypté dans la DB et pas le mdp saisie
+                    email: req.body.email,
+                    password: hash,
                     maskedEmail: maskEmail(req.body.email),
                 });
-                user.save() // On save le nouvel user dans la DB
+                user.save()
                     .then(() =>
                         res.status(201).json({ message: "Utilisateur créé !" })
-                    ) // Réponse vers le frontend sinon dis que la requete n'est pas aboutie
-                    .catch((error) => res.status(400).json({ error })); // Error 400 = Bad request
+                    )
+                    .catch((error) => res.status(400).json({ error }));
             })
-            .catch((error) => res.status(500).json({ error })); // Error 500 = Error server
+            .catch((error) => res.status(500).json({ error }));
     } else {
         res.status(401).json({
             message: "OUPS ! Votre mot de passe et/ou email est erroné ",
-        }); // Error 500 = Error server
+        });
     }
 };
-
+// Login
 exports.login = (req, res, next) => {
-    // Permet aux users existant de se connecter
-    User.findOne({ email: req.body.email }) // Cherche un seul utilisateur dont l'adresse mail correspond
+    User.findOne({ email: req.body.email })
         .then((user) => {
             if (!user) {
                 return res.status(401).json({
                     error: "OUPS ! Mauvais identifiants de connexion, Veuillez Réessayer",
-                }); // Si pas de match error 401 = Unauthorized
+                });
             }
             bcrypt
-                .compare(req.body.password, user.password) // Fonction compare de bcrypt pour voir si mdp et hash matchs, renvoie boolean
+                .compare(req.body.password, user.password)
                 .then((valid) => {
                     if (!valid) {
                         return res.status(401).json({
                             error: "OUPS ! Mauvais identifiants de connexion, Veuillez Réessayer",
-                        }); // Si pas de match error 401 = Unauthorized
+                        });
                     }
                     res.status(200).json({
                         userId: user._id,
-                        token: jwt.sign(
-                            // Fonction sign prends en param l'user Id , la clef de cryptage secrete
-                            { userId: user._id }, // Payload, càd les données que l'on veut encoder
-                            `${TOKEN}`, // Clef secrete (ou pas)
-                            { expiresIn: "24h" } // Quand la clef secrete va exprirer
-                        ),
+                        token: jwt.sign({ userId: user._id }, `${TOKEN}`, {
+                            expiresIn: "24h",
+                        }),
                     });
                 })
-                .catch((error) => res.status(500).json({ error })); // Error 500 = Error server
+                .catch((error) => res.status(500).json({ error }));
         })
         .catch((error) => res.status(500).json({ error }));
 };

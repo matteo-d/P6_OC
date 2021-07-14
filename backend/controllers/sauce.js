@@ -9,16 +9,6 @@ doJwtEgalUserId = (tokenUserId, userId) => {
         return true;
     }
 };
-// Password contain at least 6 character, 1 letter uppercase, 1 letter lowercase , 1 number ?
-isValidPassword = (password) => {
-    return /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{6,}$/.test(password);
-};
-// Email format validation
-isValidEmail = (email) => {
-    return /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/.test(
-        email
-    );
-};
 //  Heat less than 10 and more than 0 ?
 isValidHeat = (heat) => {
     try {

@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const uniqueValidator = require("mongoose-unique-validator"); // Package pour MongoDB pour vérifier que e-mail est unique , marche mieux que " required: true";
+const uniqueValidator = require("mongoose-unique-validator");
 
 const userSchema = mongoose.Schema({
     email: {
@@ -9,8 +9,8 @@ const userSchema = mongoose.Schema({
         unique: true,
     },
 
-    password: { type: String, required: true }, // Meme si le MDP est crypté il est de type string
-    maskedEmail: { type: String }
+    password: { type: String, required: true },
+    maskedEmail: { type: String },
 });
 
 userSchema.plugin(uniqueValidator);

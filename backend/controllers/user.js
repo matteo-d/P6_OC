@@ -14,7 +14,7 @@ isValidEmail = (email) => {
         email
     );
 };
-// Email mask
+// Email mask ( user1@gmail.com become uXXX1@gmail.com)
 maskEmail = (email) => {
     let str = email;
     str = str.split("");
